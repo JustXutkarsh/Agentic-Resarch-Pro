@@ -105,6 +105,62 @@ def render_results_workspace(result: ResearchResult, pdf_path: Optional[str] = N
     )
 
     # 2. Sticky Floating Dossier Navigation (Floating Glass Pill with Coral Glow)
+    st.markdown("""<style>
+    div[data-testid="stTabs"] [role="tablist"],
+    div[data-testid="stTabs"] .react-aria-TabList {
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0.90)) !important;
+        border: 1px solid rgba(0, 0, 0, 0.09) !important;
+        border-radius: 9999px !important;
+        padding: 8px 18px !important;
+        box-shadow: 0 6px 24px rgba(0, 0, 0, 0.07), inset 0 1px 1px #FFFFFF !important;
+        max-width: 980px !important;
+        margin: 0 auto 28px auto !important;
+    }
+    div[data-testid="stTabs"] [role="tab"],
+    div[data-testid="stTabs"] [data-testid="stTab"],
+    div[data-testid="stTabs"] [role="tab"] *,
+    div[data-testid="stTabs"] [data-testid="stTab"] *,
+    div[data-testid="stTabs"] [data-testid="stCaptionContainer"] *,
+    div[data-testid="stTabs"] [data-testid="stMarkdownContainer"] * {
+        color: #1C1C1E !important;
+        -webkit-text-fill-color: #1C1C1E !important;
+        font-weight: 650 !important;
+        font-size: 14px !important;
+        opacity: 1 !important;
+    }
+    div[data-testid="stTabs"] [role="tab"]:hover,
+    div[data-testid="stTabs"] [data-testid="stTab"]:hover {
+        background: rgba(0, 0, 0, 0.05) !important;
+    }
+    div[data-testid="stTabs"] [role="tab"][aria-selected="true"],
+    div[data-testid="stTabs"] [role="tab"][data-selected],
+    div[data-testid="stTabs"] [data-testid="stTab"][aria-selected="true"],
+    div[data-testid="stTabs"] [data-testid="stTab"][data-selected] {
+        background: rgba(232, 93, 74, 0.08) !important;
+        box-shadow: inset 0 0 0 1px rgba(232, 93, 74, 0.25), 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+    }
+    div[data-testid="stTabs"] [role="tab"][aria-selected="true"] *,
+    div[data-testid="stTabs"] [role="tab"][data-selected] *,
+    div[data-testid="stTabs"] [data-testid="stTab"][aria-selected="true"] *,
+    div[data-testid="stTabs"] [data-testid="stTab"][data-selected] * {
+        color: #E85D4A !important;
+        -webkit-text-fill-color: #E85D4A !important;
+        font-weight: 750 !important;
+    }
+    div[data-testid="stTabs"] .react-aria-SelectionIndicator {
+        background-color: #E85D4A !important;
+        background: #E85D4A !important;
+        height: 3px !important;
+        border-radius: 9999px !important;
+        box-shadow: 0 2px 8px rgba(232, 93, 74, 0.6) !important;
+    }
+    </style>""", unsafe_allow_html=True)
+
     tab_dossier, tab_findings, tab_perspectives, tab_contradictions, tab_claims, tab_sources, tab_download = st.tabs([
         "📄 Research Dossier",
         "💡 Key Findings",

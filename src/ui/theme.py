@@ -13,13 +13,19 @@ WHITE_LIQUID_GLASS_CSS = """<style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 :root {
+    color-scheme: light !important;
+    --text-color: #1C1C1E !important;
+    --background-color: #F8F7F4 !important;
+    --secondary-background-color: #EFECE6 !important;
+    --primary-color: #E85D4A !important;
+    
     --bg-base: #F8F7F4;
     --bg-secondary: #EFECE6;
     
     /* Contrast Glass Surfaces */
-    --surface-glass: rgba(255, 255, 255, 0.82);
-    --surface-glass-card: rgba(255, 255, 255, 0.78);
-    --surface-glass-elevated: rgba(255, 255, 255, 0.94);
+    --surface-glass: rgba(255, 255, 255, 0.88);
+    --surface-glass-card: rgba(255, 255, 255, 0.82);
+    --surface-glass-elevated: rgba(255, 255, 255, 0.96);
     
     --glass-border: rgba(255, 255, 255, 0.95);
     --glass-border-subtle: rgba(0, 0, 0, 0.08);
@@ -56,7 +62,7 @@ WHITE_LIQUID_GLASS_CSS = """<style>
 }
 
 /* Base Body & App Canvas */
-.stApp {
+body, .stApp {
     background-color: var(--bg-base) !important;
     background-image: 
         radial-gradient(circle at 12% 14%, rgba(215, 228, 255, 0.45) 0%, transparent 42%),
@@ -66,11 +72,31 @@ WHITE_LIQUID_GLASS_CSS = """<style>
     color: var(--text-primary) !important;
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif !important;
     letter-spacing: -0.015em;
+    color-scheme: light !important;
 }
 
-/* Global Markdown Contrast Reset */
-.stMarkdown, .stMarkdown p, .stMarkdown span, .stMarkdown div {
+/* Global Strict Light Contrast Overrides — Prevents Dark-Mode Bleed */
+.stMarkdown,
+.stMarkdown p,
+.stMarkdown span,
+.stMarkdown div,
+.stMarkdown li,
+.stMarkdown h1,
+.stMarkdown h2,
+.stMarkdown h3,
+.stMarkdown h4,
+.stMarkdown h5,
+.stMarkdown h6,
+.stText,
+.stCaption,
+[data-testid="stCaptionContainer"],
+[data-testid="stCaptionContainer"] *,
+[data-testid="stMarkdownContainer"],
+[data-testid="stMarkdownContainer"] p,
+[data-testid="stMarkdownContainer"] span,
+label {
     color: var(--text-primary) !important;
+    -webkit-text-fill-color: var(--text-primary) !important;
     opacity: 1 !important;
 }
 
@@ -112,7 +138,7 @@ div[data-testid="stToolbar"] {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0.70));
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.90), rgba(255, 255, 255, 0.72));
     backdrop-filter: blur(28px) saturate(160%);
     -webkit-backdrop-filter: blur(28px) saturate(160%);
     border: 1px solid var(--glass-border);
@@ -144,7 +170,7 @@ div[data-testid="stToolbar"] {
 .nav-link-item {
     font-size: 13.5px;
     font-weight: 600;
-    color: #3A3A3C;
+    color: #3A3A3C !important;
     padding: 6px 14px;
     border-radius: var(--radius-full);
     background: transparent;
@@ -155,7 +181,7 @@ div[data-testid="stToolbar"] {
 }
 
 .nav-link-item:hover {
-    color: var(--text-primary);
+    color: var(--text-primary) !important;
     background: rgba(0, 0, 0, 0.05);
 }
 
@@ -203,7 +229,7 @@ div[data-testid="stToolbar"] {
     font-weight: 800;
     line-height: 1.1;
     letter-spacing: -1.6px;
-    color: var(--text-primary);
+    color: var(--text-primary) !important;
     margin-bottom: 16px;
 }
 
@@ -211,13 +237,13 @@ div[data-testid="stToolbar"] {
     font-family: 'Newsreader', serif;
     font-style: italic;
     font-weight: 400;
-    color: #2C2C2E;
+    color: #2C2C2E !important;
     letter-spacing: -0.5px;
 }
 
 .hero-subtitle {
     font-size: 18px;
-    color: var(--text-secondary);
+    color: var(--text-secondary) !important;
     line-height: 1.6;
     max-width: 600px;
     margin: 0 auto;
@@ -227,7 +253,7 @@ div[data-testid="stToolbar"] {
 
 /* Large Floating Liquid-Glass Search Composer */
 div[data-baseweb="input"] {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.78)) !important;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.94), rgba(255, 255, 255, 0.80)) !important;
     border: 1px solid var(--glass-border) !important;
     border-radius: var(--radius-xl) !important;
     backdrop-filter: blur(32px) !important;
@@ -297,7 +323,7 @@ div[data-baseweb="input"] input::placeholder {
 
 /* Secondary Button (Chips & Selectors) — High Contrast Light Surface */
 .stButton > button[kind="secondary"] {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0.72)) !important;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.90), rgba(255, 255, 255, 0.74)) !important;
     color: #1C1C1E !important;
     border: 1px solid rgba(0, 0, 0, 0.10) !important;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), inset 0 1px 1px #FFFFFF !important;
@@ -353,7 +379,7 @@ div[data-baseweb="input"] input::placeholder {
 }
 
 .depth-card {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.65));
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0.70));
     backdrop-filter: blur(28px) saturate(160%);
     -webkit-backdrop-filter: blur(28px) saturate(160%);
     border: 1px solid var(--glass-border);
@@ -410,24 +436,24 @@ div[data-baseweb="input"] input::placeholder {
     gap: 8px;
     font-size: 16.5px;
     font-weight: 800;
-    color: var(--text-primary);
+    color: var(--text-primary) !important;
     letter-spacing: -0.3px;
 }
 
 .depth-tagline {
     font-size: 13.5px;
     font-weight: 700;
-    color: var(--accent-blue);
+    color: var(--accent-blue) !important;
     margin-bottom: 8px;
 }
 
 .depth-card.selected .depth-tagline {
-    color: #0066FF;
+    color: #0066FF !important;
 }
 
 .depth-desc {
     font-size: 13.5px;
-    color: var(--text-secondary);
+    color: var(--text-secondary) !important;
     line-height: 1.55;
     margin-bottom: 12px;
     opacity: 1 !important;
@@ -435,7 +461,7 @@ div[data-baseweb="input"] input::placeholder {
 
 .depth-features-list {
     font-size: 12.5px;
-    color: #3A3A3C;
+    color: #3A3A3C !important;
     line-height: 1.65;
     border-top: 1px solid rgba(0, 0, 0, 0.08);
     padding-top: 10px;
@@ -489,7 +515,7 @@ div[data-baseweb="input"] input::placeholder {
 .banner-sublabel {
     font-size: 12px;
     font-weight: 700;
-    color: var(--text-muted);
+    color: var(--text-muted) !important;
     text-transform: uppercase;
     letter-spacing: 0.8px;
 }
@@ -498,7 +524,7 @@ div[data-baseweb="input"] input::placeholder {
     font-family: 'Newsreader', serif;
     font-size: 26px;
     font-weight: 700;
-    color: var(--text-primary);
+    color: var(--text-primary) !important;
     margin: 4px 0 0 0;
     line-height: 1.25;
 }
@@ -525,14 +551,14 @@ div[data-baseweb="input"] input::placeholder {
 .banner-status-text {
     font-size: 12px;
     font-weight: 750;
-    color: #047857;
+    color: #047857 !important;
     letter-spacing: 0.5px;
     text-transform: uppercase;
 }
 
 /* Clean Research Stage Journey (7 Stages) */
 .stage-journey-panel {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0.70));
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.90), rgba(255, 255, 255, 0.74));
     backdrop-filter: blur(28px);
     -webkit-backdrop-filter: blur(28px);
     border: 1px solid var(--glass-border);
@@ -604,31 +630,31 @@ div[data-baseweb="input"] input::placeholder {
     font-size: 11px;
     font-weight: 800;
     letter-spacing: 0.5px;
-    color: var(--text-muted);
+    color: var(--text-muted) !important;
     text-transform: uppercase;
 }
 
 .stage-node-name {
     font-size: 12px;
     font-weight: 650;
-    color: #3A3A3C;
+    color: #3A3A3C !important;
     line-height: 1.35;
     opacity: 1 !important;
 }
 
 .stage-node-box.active .stage-node-name {
-    color: #0066FF;
+    color: #0066FF !important;
     font-weight: 800;
 }
 
 .stage-node-box.done .stage-node-name {
-    color: var(--text-primary);
+    color: var(--text-primary) !important;
     font-weight: 700;
 }
 
 /* Live Activity Monitor — High Contrast Glass */
 .live-activity-card {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.90), rgba(255, 255, 255, 0.75));
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.78));
     backdrop-filter: blur(28px) saturate(160%);
     -webkit-backdrop-filter: blur(28px) saturate(160%);
     border: 1px solid var(--glass-border);
@@ -653,7 +679,7 @@ div[data-baseweb="input"] input::placeholder {
     gap: 8px;
     font-size: 12.5px;
     font-weight: 750;
-    color: var(--text-primary);
+    color: var(--text-primary) !important;
     text-transform: uppercase;
     letter-spacing: 0.8px;
 }
@@ -675,7 +701,7 @@ div[data-baseweb="input"] input::placeholder {
 .activity-line {
     font-size: 14px;
     line-height: 1.9;
-    color: #3A3A3C;
+    color: #3A3A3C !important;
     display: flex;
     align-items: flex-start;
     gap: 12px;
@@ -683,7 +709,7 @@ div[data-baseweb="input"] input::placeholder {
 }
 
 .activity-line.active-line {
-    color: var(--text-primary);
+    color: var(--text-primary) !important;
     font-weight: 700;
 }
 
@@ -691,7 +717,7 @@ div[data-baseweb="input"] input::placeholder {
     font-family: 'JetBrains Mono', monospace;
     font-size: 11.5px;
     font-weight: 600;
-    color: var(--text-muted);
+    color: var(--text-muted) !important;
     min-width: 44px;
 }
 
@@ -719,7 +745,7 @@ div[data-baseweb="input"] input::placeholder {
 }
 
 .metric-glass-box {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0.70));
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.90), rgba(255, 255, 255, 0.74));
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-md);
     padding: 16px 20px;
@@ -730,7 +756,7 @@ div[data-baseweb="input"] input::placeholder {
 .metric-glass-number {
     font-size: 32px;
     font-weight: 800;
-    color: var(--text-primary);
+    color: var(--text-primary) !important;
     line-height: 1;
     letter-spacing: -0.5px;
     margin-bottom: 6px;
@@ -739,13 +765,13 @@ div[data-baseweb="input"] input::placeholder {
 .metric-glass-label {
     font-size: 12.5px;
     font-weight: 650;
-    color: var(--text-secondary);
+    color: var(--text-secondary) !important;
     opacity: 1 !important;
 }
 
 /* Final Report Dossier View */
 .report-header-panel {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.90), rgba(255, 255, 255, 0.75));
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.78));
     backdrop-filter: blur(28px);
     -webkit-backdrop-filter: blur(28px);
     border: 1px solid var(--glass-border);
@@ -761,14 +787,14 @@ div[data-baseweb="input"] input::placeholder {
     font-size: 42px;
     font-weight: 700;
     line-height: 1.18;
-    color: var(--text-primary);
+    color: var(--text-primary) !important;
     letter-spacing: -0.8px;
     margin-bottom: 12px;
 }
 
 .report-one-liner {
     font-size: 17px;
-    color: #2C2C2E;
+    color: #2C2C2E !important;
     line-height: 1.6;
     margin-bottom: 20px;
     max-width: 820px;
@@ -792,13 +818,13 @@ div[data-baseweb="input"] input::placeholder {
     padding: 5px 14px;
     font-size: 12.5px;
     font-weight: 650;
-    color: var(--text-primary);
+    color: var(--text-primary) !important;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
 }
 
 /* Executive Summary Card */
 .exec-summary-card {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.90), rgba(255, 255, 255, 0.75));
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.78));
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-lg);
     padding: 28px 32px;
@@ -808,7 +834,7 @@ div[data-baseweb="input"] input::placeholder {
 
 /* Interactive Insight Card */
 .insight-card {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0.70));
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.90), rgba(255, 255, 255, 0.74));
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-md);
     padding: 22px 26px;
@@ -834,7 +860,7 @@ div[data-baseweb="input"] input::placeholder {
     font-family: 'Newsreader', serif;
     font-size: 28px;
     font-weight: 800;
-    color: var(--text-primary);
+    color: var(--text-primary) !important;
     margin-right: 14px;
 }
 
@@ -847,7 +873,7 @@ div[data-baseweb="input"] input::placeholder {
 }
 
 .perspective-col-card {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.90), rgba(255, 255, 255, 0.74));
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.76));
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-md);
     padding: 22px;
@@ -861,7 +887,7 @@ div[data-baseweb="input"] input::placeholder {
 }
 
 .persp-badge-optimistic {
-    color: #047857;
+    color: #047857 !important;
     background: #E6F7F0;
     border: 1px solid #A7F3D0;
     padding: 4px 12px;
@@ -871,7 +897,7 @@ div[data-baseweb="input"] input::placeholder {
 }
 
 .persp-badge-balanced {
-    color: #92400E;
+    color: #92400E !important;
     background: #FEF3C7;
     border: 1px solid #FDE68A;
     padding: 4px 12px;
@@ -881,7 +907,7 @@ div[data-baseweb="input"] input::placeholder {
 }
 
 .persp-badge-skeptical {
-    color: #9F1239;
+    color: #9F1239 !important;
     background: #FFE4E6;
     border: 1px solid #FECDD3;
     padding: 4px 12px;
@@ -891,31 +917,54 @@ div[data-baseweb="input"] input::placeholder {
 }
 
 /* ==============================================================================
-   TOP REPORT NAVIGATION FIX — Subtle Floating Glass Pill & Coral Glow Active State
+   TOP REPORT NAVIGATION FIX — Floating Glass Pill & Coral Glow Active State
+   Targets Streamlit 1.63.0 React-Aria and BaseWeb tab components
    ============================================================================== */
 div[data-testid="stTabs"] {
     margin-top: 24px !important;
 }
 
-div[data-testid="stTabs"] > div[role="tablist"] {
+/* The tab list bar container — Floating Glass Pill */
+div[data-testid="stTabs"] [role="tablist"],
+div[data-testid="stTabs"] .react-aria-TabList,
+div[data-testid="stTabs"] [data-baseweb="tab-list"],
+.stTabs [role="tablist"],
+.stTabs .react-aria-TabList,
+.react-aria-TabList {
     display: flex !important;
     justify-content: center !important;
     align-items: center !important;
     flex-wrap: wrap !important;
-    gap: 6px !important;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0.68)) !important;
+    gap: 8px !important;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0.90)) !important;
     backdrop-filter: blur(28px) saturate(180%) !important;
     -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
-    border: 1px solid rgba(255, 255, 255, 0.95) !important;
+    border: 1px solid rgba(0, 0, 0, 0.09) !important;
     border-radius: var(--radius-full) !important;
-    padding: 6px 14px !important;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), inset 0 1px 1px #FFFFFF !important;
-    max-width: 960px !important;
+    padding: 8px 18px !important;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.07), inset 0 1px 1px #FFFFFF !important;
+    max-width: 980px !important;
     margin: 0 auto 28px auto !important;
+    position: relative !important;
+    z-index: 5 !important;
 }
 
-/* Default Navigation Items: Dark Charcoal Text, 100% Opacity, Medium Font Weight */
-div[data-testid="stTabs"] button[role="tab"] {
+/* Remove default grey underline across tablist */
+div[data-testid="stTabs"] [role="tablist"]::after,
+div[data-testid="stTabs"] .react-aria-TabList::after,
+.stTabs [role="tablist"]::after,
+.react-aria-TabList::after {
+    display: none !important;
+}
+
+/* Individual Tab Items: Covers BOTH div and button, and data-testid="stTab" */
+div[data-testid="stTabs"] [data-testid="stTab"],
+div[data-testid="stTabs"] [role="tab"],
+div[data-testid="stTabs"] div[role="tab"],
+div[data-testid="stTabs"] button[role="tab"],
+.stTabs [data-testid="stTab"],
+.stTabs [role="tab"],
+.react-aria-Tab {
     background: transparent !important;
     border: none !important;
     border-radius: var(--radius-full) !important;
@@ -923,45 +972,92 @@ div[data-testid="stTabs"] button[role="tab"] {
     position: relative !important;
     transition: all 0.2s ease !important;
     cursor: pointer !important;
+    color: #1C1C1E !important;
+    -webkit-text-fill-color: #1C1C1E !important;
+    opacity: 1 !important;
 }
 
-div[data-testid="stTabs"] button[role="tab"] * {
-    color: #3A3A3C !important;
+/* FORCE High-Contrast Dark Charcoal on EVERY child element inside every tab */
+div[data-testid="stTabs"] [data-testid="stTab"] *,
+div[data-testid="stTabs"] [role="tab"] *,
+div[data-testid="stTabs"] div[role="tab"] *,
+div[data-testid="stTabs"] button[role="tab"] *,
+div[data-testid="stTabs"] [data-testid="stCaptionContainer"] *,
+div[data-testid="stTabs"] [data-testid="stMarkdownContainer"] *,
+div[data-testid="stTabs"] [data-testid="stMarkdownContainer"] p,
+div[data-testid="stTabs"] [data-testid="stMarkdownContainer"] span,
+.stTabs [data-testid="stTab"] *,
+.stTabs [role="tab"] *,
+.react-aria-Tab * {
+    color: #1C1C1E !important;
+    -webkit-text-fill-color: #1C1C1E !important;
     font-size: 14px !important;
-    font-weight: 550 !important;
+    font-weight: 650 !important;
     opacity: 1 !important;
     letter-spacing: -0.2px !important;
 }
 
-div[data-testid="stTabs"] button[role="tab"]:hover {
-    background: rgba(0, 0, 0, 0.04) !important;
+/* Hover state */
+div[data-testid="stTabs"] [data-testid="stTab"]:hover,
+div[data-testid="stTabs"] [role="tab"]:hover,
+.react-aria-Tab:hover {
+    background: rgba(0, 0, 0, 0.05) !important;
 }
 
-div[data-testid="stTabs"] button[role="tab"]:hover * {
-    color: #1C1C1E !important;
+div[data-testid="stTabs"] [data-testid="stTab"]:hover *,
+div[data-testid="stTabs"] [role="tab"]:hover *,
+.react-aria-Tab:hover * {
+    color: #000000 !important;
+    -webkit-text-fill-color: #000000 !important;
 }
 
-/* Active Navigation Item: Coral Text (#E85D4A), Font-Weight 700, with Coral Underline and Soft Glow */
-div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] {
-    background: rgba(255, 255, 255, 0.95) !important;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05), inset 0 1px 1px #FFFFFF !important;
+/* Active tab state */
+div[data-testid="stTabs"] [data-testid="stTab"][aria-selected="true"],
+div[data-testid="stTabs"] [role="tab"][aria-selected="true"],
+div[data-testid="stTabs"] [data-testid="stTab"][data-selected],
+div[data-testid="stTabs"] [data-testid="stTab"][data-selected="true"],
+div[data-testid="stTabs"] [role="tab"][data-selected],
+.react-aria-Tab[data-selected] {
+    background: rgba(232, 93, 74, 0.08) !important;
+    box-shadow: inset 0 0 0 1px rgba(232, 93, 74, 0.25), 0 2px 8px rgba(0, 0, 0, 0.04) !important;
 }
 
-div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] * {
+/* Active tab text: Coral Text (#E85D4A) with Font-Weight 750 */
+div[data-testid="stTabs"] [data-testid="stTab"][aria-selected="true"] *,
+div[data-testid="stTabs"] [role="tab"][aria-selected="true"] *,
+div[data-testid="stTabs"] [data-testid="stTab"][data-selected] *,
+div[data-testid="stTabs"] [data-testid="stTab"][data-selected="true"] *,
+div[data-testid="stTabs"] [role="tab"][data-selected] *,
+.react-aria-Tab[data-selected] * {
     color: #E85D4A !important;
-    font-weight: 700 !important;
+    -webkit-text-fill-color: #E85D4A !important;
+    font-weight: 750 !important;
     opacity: 1 !important;
 }
 
-/* Coral Underline: 2.5px height with soft coral glow */
-div[data-testid="stTabs"] button[role="tab"][aria-selected="true"]::after {
+/* Active Coral Underline with Soft Glow */
+div[data-testid="stTabs"] [data-testid="stTab"][aria-selected="true"]::after,
+div[data-testid="stTabs"] [role="tab"][aria-selected="true"]::after,
+.react-aria-Tab[data-selected]::after {
     content: '' !important;
     position: absolute !important;
     bottom: 3px !important;
-    left: 20% !important;
-    right: 20% !important;
+    left: 18% !important;
+    right: 18% !important;
     height: 3px !important;
     background: #E85D4A !important;
+    border-radius: 9999px !important;
+    box-shadow: 0 2px 8px rgba(232, 93, 74, 0.6) !important;
+}
+
+/* React-Aria Selection Indicator fallback */
+div[data-testid="stTabs"] .react-aria-SelectionIndicator,
+.stTabs .react-aria-SelectionIndicator,
+[data-testid="stTab"] .react-aria-SelectionIndicator,
+.react-aria-SelectionIndicator {
+    background-color: #E85D4A !important;
+    background: #E85D4A !important;
+    height: 3px !important;
     border-radius: 9999px !important;
     box-shadow: 0 2px 8px rgba(232, 93, 74, 0.6) !important;
 }
