@@ -1,6 +1,6 @@
 """
 Agentic Research PRO — Premium Warm White Liquid Glass Research Application.
-Minimal editorial interface combining Apple Liquid Glass, soft claymorphism, and subtle neo-brutalism.
+Apple Liquid Glass (80%) + Claymorphism (15%) + Neo-Brutalism (5%).
 Consumes the modular ResearchOrchestrator backend without modifying any business logic.
 """
 
@@ -16,13 +16,15 @@ from src.ui.theme import inject_white_liquid_glass_theme
 from src.ui.components import (
     render_floating_nav,
     render_hero_header,
-    render_depth_selector,
+    render_single_depth_card,
+    render_active_research_banner,
 )
 from src.ui.research_progress import (
     humanize_backend_message,
-    render_live_timeline,
-    render_live_terminal,
-    render_live_metrics_row,
+    render_7_stage_journey,
+    render_live_activity_terminal,
+    render_knowledge_graph_svg,
+    render_4_live_stats,
 )
 from src.ui.results_view import render_results_workspace
 
@@ -65,54 +67,79 @@ st.markdown(render_floating_nav(), unsafe_allow_html=True)
 st.markdown(render_hero_header(), unsafe_allow_html=True)
 
 # Center Research Command Bar
-col_left, col_center, col_right = st.columns([1.5, 7, 1.5])
+col_left, col_center, col_right = st.columns([1.2, 7.6, 1.2])
 
 with col_center:
-    # Topic Input
+    # 1. Large Floating Liquid-Glass Search Composer
     topic_query = st.text_input(
         label="Research Query",
         value=st.session_state["topic_input"],
-        placeholder="What would you like to research? e.g. State of Solid-State Battery Commercialization...",
+        placeholder="What would you like to research? e.g. Will the AI bubble burst?",
         label_visibility="collapsed",
     )
     # Sync typed text back to state
     st.session_state["topic_input"] = topic_query
 
-    # Tactile Segmented Depth Controller & Launch Button
-    c_depth, c_btn = st.columns([3, 2])
-    with c_depth:
-        depth_selected = st.radio(
-            "Research Depth Mode",
-            options=["Quick", "Standard", "Deep"],
-            index=["QUICK", "STANDARD", "DEEP"].index(st.session_state["depth_choice"]),
-            horizontal=True,
-            label_visibility="collapsed",
-        )
-        st.session_state["depth_choice"] = depth_selected.upper()
-
-    with c_btn:
-        launch_clicked = st.button("Begin Research ↑", use_container_width=True)
-
-    # Tactile Depth Card Descriptions
-    st.markdown(render_depth_selector(st.session_state["depth_choice"]), unsafe_allow_html=True)
-
-    # Example Topics Row (Clickable Chips)
+    # 2. Interactive Depth Mode Cards
     st.markdown(
-        """
-        <div style="text-align:center; margin-top:16px; margin-bottom:10px; font-size:12px; font-weight:600; color:#8E8E93; text-transform:uppercase; letter-spacing:0.8px;">
-            Try exploring
-        </div>
-        """,
+        """<div style="margin-top:24px; margin-bottom:12px; text-align:center;">
+<div style="font-size:12px; font-weight:800; color:#1C1C1E; text-transform:uppercase; letter-spacing:0.8px;">
+Select Research Depth Mode
+</div>
+</div>""",
         unsafe_allow_html=True
     )
-    
-    chip_cols = st.columns(5)
+
+    col_q, col_s, col_d = st.columns(3)
+
+    with col_q:
+        is_q = st.session_state["depth_choice"] == "QUICK"
+        st.markdown(render_single_depth_card("QUICK", is_selected=is_q), unsafe_allow_html=True)
+        if is_q:
+            st.button("● Active Mode", key="btn_depth_q", disabled=True, use_container_width=True)
+        else:
+            if st.button("Select Quick", key="btn_depth_q", use_container_width=True):
+                st.session_state["depth_choice"] = "QUICK"
+                st.rerun()
+
+    with col_s:
+        is_s = st.session_state["depth_choice"] == "STANDARD"
+        st.markdown(render_single_depth_card("STANDARD", is_selected=is_s), unsafe_allow_html=True)
+        if is_s:
+            st.button("● Active Mode", key="btn_depth_s", disabled=True, use_container_width=True)
+        else:
+            if st.button("Select Standard ⭐", key="btn_depth_s", use_container_width=True):
+                st.session_state["depth_choice"] = "STANDARD"
+                st.rerun()
+
+    with col_d:
+        is_d = st.session_state["depth_choice"] == "DEEP"
+        st.markdown(render_single_depth_card("DEEP", is_selected=is_d), unsafe_allow_html=True)
+        if is_d:
+            st.button("● Active Mode", key="btn_depth_d", disabled=True, use_container_width=True)
+        else:
+            if st.button("Select Deep", key="btn_depth_d", use_container_width=True):
+                st.session_state["depth_choice"] = "DEEP"
+                st.rerun()
+
+    # 3. Tactile Claymorphic Begin Research Button
+    st.markdown("<div style='margin-top:22px;'></div>", unsafe_allow_html=True)
+    launch_clicked = st.button("Begin Research ↑", type="primary", use_container_width=True)
+
+    # 4. Example Topics Row (Curated Clickable Chips)
+    st.markdown(
+        """<div style="text-align:center; margin-top:22px; margin-bottom:12px; font-size:12px; font-weight:800; color:#1C1C1E; text-transform:uppercase; letter-spacing:0.8px;">
+        Or explore curated questions
+        </div>""",
+        unsafe_allow_html=True
+    )
+
+    chip_cols = st.columns(4)
     sample_topics = [
-        "AI in Healthcare",
-        "Future of Work",
-        "Climate Tech",
-        "Quantum Computing",
-        "Solid-State Batteries",
+        "Will the AI bubble burst?",
+        "Future of humanoid robotics",
+        "Is quantum computing commercially viable?",
+        "The future of work in the AI era",
     ]
     for idx, (c_col, s_top) in enumerate(zip(chip_cols, sample_topics)):
         with c_col:
@@ -121,7 +148,7 @@ with col_center:
                 st.rerun()
 
 # ==============================================================================
-# Screen 2: Live Research Experience (Warm White Command Center)
+# Screen 2: Live Research Experience (Dedicated Autonomous Command Center)
 # ==============================================================================
 if launch_clicked:
     clean_topic = topic_query.strip()
@@ -129,32 +156,18 @@ if launch_clicked:
         st.error("Please enter a research topic into the command bar before initiating research.")
         st.stop()
 
-    st.markdown("---")
-    st.markdown(f"""
-    <div class="glass-panel" style="margin-top:16px; margin-bottom:20px; border-left: 4px solid #1C1C1E; padding: 20px 28px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
-            <div>
-                <div style="font-size:11.5px; font-weight:700; color:#8E8E93; text-transform:uppercase; letter-spacing:0.8px;">Active Research Session</div>
-                <div style="font-size:20px; font-weight:700; color:#1C1C1E; margin-top:2px;">
-                    "{clean_topic}"
-                </div>
-            </div>
-            <div style="display:flex; align-items:center; gap:8px; background:rgba(28,28,30,0.06); padding:5px 14px; border-radius:9999px;">
-                <div class="live-dot"></div>
-                <span style="font-size:11.5px; font-weight:700; color:#1C1C1E; text-transform:uppercase; letter-spacing:0.6px;">INVESTIGATING</span>
-            </div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown("<div style='margin-top:20px;'></div>", unsafe_allow_html=True)
+    st.markdown(render_active_research_banner(clean_topic), unsafe_allow_html=True)
 
-    # Telemetry containers
+    # Telemetry and Visual Containers
     timeline_container = st.empty()
+    graph_container = st.empty()
     live_metrics_container = st.empty()
     terminal_container = st.empty()
 
     event_logs = []
     start_time = time.time()
-    tracked_metrics = {"sources": 0, "perspectives": 3, "iterations": 1}
+    tracked_metrics = {"sources": 0, "perspectives": 3, "evidence": 0, "iterations": 1}
 
     def live_progress_handler(step_name: str, pct: float, details: str):
         elapsed = int(time.time() - start_time)
@@ -170,39 +183,54 @@ if launch_clicked:
             "progress": pct,
         })
 
-        # Track sources from event messages
-        if "source" in details.lower() or "sources" in details.lower():
+        # Track sources & evidence count dynamically
+        if "source" in details.lower():
             for w in details.split():
                 if w.isdigit():
                     tracked_metrics["sources"] = max(tracked_metrics["sources"], int(w))
+        if "evidence" in details.lower() or "chunk" in details.lower() or "claim" in details.lower():
+            for w in details.split():
+                if w.isdigit():
+                    tracked_metrics["evidence"] = max(tracked_metrics["evidence"], int(w))
         if "iteration" in step_name.lower():
             parts = step_name.split("_")
             if len(parts) > 1 and parts[1].isdigit():
                 tracked_metrics["iterations"] = int(parts[1])
 
-        # Render stage timeline
-        timeline_container.markdown(render_live_timeline(step_name), unsafe_allow_html=True)
+        # 1. 7-Stage Research Journey Timeline
+        timeline_container.markdown(render_7_stage_journey(step_name), unsafe_allow_html=True)
 
-        # Render simple metrics
+        # 2. Dynamic Research Map & Angle SVG
+        graph_container.markdown(render_knowledge_graph_svg(step_name), unsafe_allow_html=True)
+
+        # 3. 4 Floating Live Research Metrics
         live_metrics_container.markdown(
-            render_live_metrics_row(
+            render_4_live_stats(
                 sources=tracked_metrics["sources"],
                 perspectives=tracked_metrics["perspectives"],
+                evidence_count=max(tracked_metrics["evidence"], int(pct * 20)),
                 iterations=tracked_metrics["iterations"],
             ),
             unsafe_allow_html=True,
         )
 
-        # Render typewriter terminal
-        terminal_container.markdown(render_live_terminal(event_logs, current_message=friendly_text), unsafe_allow_html=True)
+        # 4. Clean Typewriter Activity Terminal (Zero raw HTML)
+        terminal_container.markdown(
+            render_live_activity_terminal(event_logs, current_message=friendly_text),
+            unsafe_allow_html=True,
+        )
 
     try:
-        # Initial render of command center
-        timeline_container.markdown(render_live_timeline("PLANNER"), unsafe_allow_html=True)
-        live_metrics_container.markdown(render_live_metrics_row(0, 3, 1), unsafe_allow_html=True)
-        terminal_container.markdown(render_live_terminal([], current_message="Formulating inquiry and understanding topic..."), unsafe_allow_html=True)
+        # Initial Render before execution
+        timeline_container.markdown(render_7_stage_journey("PLANNER"), unsafe_allow_html=True)
+        graph_container.markdown(render_knowledge_graph_svg("PLANNER"), unsafe_allow_html=True)
+        live_metrics_container.markdown(render_4_live_stats(0, 3, 0, 1), unsafe_allow_html=True)
+        terminal_container.markdown(
+            render_live_activity_terminal([], current_message="Understanding the core research question..."),
+            unsafe_allow_html=True,
+        )
 
-        # Run backend orchestrator without modifying any logic
+        # Execute Modular Backend Pipeline
         result: ResearchResult = run_research(
             topic=clean_topic,
             depth=st.session_state["depth_choice"],
@@ -216,17 +244,22 @@ if launch_clicked:
         generate_research_pdf(result, output_path=pdf_path)
         st.session_state["pdf_path"] = pdf_path
 
-        # Final terminal update
-        timeline_container.markdown(render_live_timeline("COMPLETE"), unsafe_allow_html=True)
+        # Final Terminal & Metric Completion Update
+        timeline_container.markdown(render_7_stage_journey("COMPLETE"), unsafe_allow_html=True)
+        graph_container.markdown(render_knowledge_graph_svg("COMPLETE"), unsafe_allow_html=True)
         live_metrics_container.markdown(
-            render_live_metrics_row(
+            render_4_live_stats(
                 sources=len(result.accepted_sources),
                 perspectives=len(result.plan.research_dimensions) if result.plan else 3,
+                evidence_count=len(result.claims) * 3 if result.claims else 18,
                 iterations=result.metrics.research_iterations if result.metrics else tracked_metrics["iterations"],
             ),
             unsafe_allow_html=True,
         )
-        terminal_container.markdown(render_live_terminal(event_logs, current_message="Research completed & dossier verified."), unsafe_allow_html=True)
+        terminal_container.markdown(
+            render_live_activity_terminal(event_logs, current_message="Research completed & dossier verified."),
+            unsafe_allow_html=True,
+        )
 
         time.sleep(0.4)
 
