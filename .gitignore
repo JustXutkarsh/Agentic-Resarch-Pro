@@ -1,0 +1,15 @@
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.env
+.env.*
+!.env.example
+research.pdf
+research_report.pdf
+research_dossier_*.pdf
+*.pdf
+.DS_Store
+.chroma/
+chroma_data/

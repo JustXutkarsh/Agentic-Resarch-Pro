@@ -1,248 +1,245 @@
-import streamlit as st
+"""
+Agentic Research PRO — Premium Warm White Liquid Glass Research Application.
+Minimal editorial interface combining Apple Liquid Glass, soft claymorphism, and subtle neo-brutalism.
+Consumes the modular ResearchOrchestrator backend without modifying any business logic.
+"""
+
 import os
+import time
+from datetime import datetime
+import streamlit as st
 from dotenv import load_dotenv
 
-from src.scraper import scrape_urls
-from src.chunker import chunk_text
-from src.embedder import OpenAIEmbedder
-from src.chroma_store import get_vector_store, save_vectors, query_vectors
-from src.summarizer import Summarizer
+from src.research_orchestrator import run_research, ResearchResult
+from src.pdfgen import generate_research_pdf
+from src.ui.theme import inject_white_liquid_glass_theme
+from src.ui.components import (
+    render_floating_nav,
+    render_hero_header,
+    render_depth_selector,
+)
+from src.ui.research_progress import (
+    humanize_backend_message,
+    render_live_timeline,
+    render_live_terminal,
+    render_live_metrics_row,
+)
+from src.ui.results_view import render_results_workspace
 
-import requests
-from fpdf import FPDF
-
+# Load environment variables from .env
 load_dotenv()
 
 st.set_page_config(
-    page_title="Agentic Research PRO",
+    page_title="Agentic Research",
     layout="wide",
-    page_icon="🤝"
+    page_icon="✦",
+    initial_sidebar_state="collapsed",
 )
 
-# ============================================
-#                STYLES
-# ============================================
-st.markdown("""
-<style>
-    body {
-        background-color: #0d0d0d !important;
-        color: #ffffff !important;
-    }
+# Apply Warm White Liquid Glass Design System
+inject_white_liquid_glass_theme()
 
-    .big-title {
-        font-size: 42px;
-        font-weight: 900;
-        color: white;
-    }
+# Background Ambient Liquid Layer
+st.markdown('<div class="ambient-liquid-layer"></div>', unsafe_allow_html=True)
 
-    .subtitle {
-        font-size: 18px;
-        color: #aaaaaa;
-        padding-bottom: 12px;
-    }
+# ==============================================================================
+# Session State Initialization
+# ==============================================================================
+if "research_result" not in st.session_state:
+    st.session_state["research_result"] = None
+if "pdf_path" not in st.session_state:
+    st.session_state["pdf_path"] = None
+if "depth_choice" not in st.session_state:
+    st.session_state["depth_choice"] = "STANDARD"
+if "topic_input" not in st.session_state:
+    st.session_state["topic_input"] = ""
 
-    .agent-card {
-        padding: 18px 20px;
-        border-radius: 18px;
-        margin-bottom: 14px;
-        font-size: 17px;
-        font-weight: 600;
-        color: white;
-        background: rgba(20,20,20,0.6);
-        border: 1px solid rgba(255,255,255,0.06);
-        box-shadow: 0px 0px 18px rgba(0,0,0,0.4);
-    }
+# ==============================================================================
+# Top Floating Navigation Bar
+# ==============================================================================
+st.markdown(render_floating_nav(), unsafe_allow_html=True)
 
-    .working {
-        background: rgba(80, 50, 8, 0.4);
-        border-left: 6px solid #ffb74d;
-        box-shadow: 0px 0px 18px #ffb74daa;
-    }
+# ==============================================================================
+# Screen 1: Editorial Research Home
+# ==============================================================================
+st.markdown(render_hero_header(), unsafe_allow_html=True)
 
-    .done {
-        background: rgba(7, 60, 45, 0.45);
-        border-left: 6px solid #00e676;
-        box-shadow: 0px 0px 18px #00e676aa;
-    }
+# Center Research Command Bar
+col_left, col_center, col_right = st.columns([1.5, 7, 1.5])
 
-    .stButton > button {
-        background: linear-gradient(90deg, #3b82f6, #8b5cf6) !important;
-        color: white !important;
-        font-size: 16px !important;
-        font-weight: 600 !important;
-        border-radius: 10px !important;
-        padding: 10px 18px !important;
-        border: none !important;
-    }
+with col_center:
+    # Topic Input
+    topic_query = st.text_input(
+        label="Research Query",
+        value=st.session_state["topic_input"],
+        placeholder="What would you like to research? e.g. State of Solid-State Battery Commercialization...",
+        label_visibility="collapsed",
+    )
+    # Sync typed text back to state
+    st.session_state["topic_input"] = topic_query
 
-    .stButton > button:hover {
-        transform: scale(1.02);
-        opacity: 0.9;
-    }
+    # Tactile Segmented Depth Controller & Launch Button
+    c_depth, c_btn = st.columns([3, 2])
+    with c_depth:
+        depth_selected = st.radio(
+            "Research Depth Mode",
+            options=["Quick", "Standard", "Deep"],
+            index=["QUICK", "STANDARD", "DEEP"].index(st.session_state["depth_choice"]),
+            horizontal=True,
+            label_visibility="collapsed",
+        )
+        st.session_state["depth_choice"] = depth_selected.upper()
 
-    .source-link {
-        font-size: 15px;
-        padding: 4px 0px;
-    }
+    with c_btn:
+        launch_clicked = st.button("Begin Research ↑", use_container_width=True)
 
-</style>
-""", unsafe_allow_html=True)
+    # Tactile Depth Card Descriptions
+    st.markdown(render_depth_selector(st.session_state["depth_choice"]), unsafe_allow_html=True)
 
-# ============================================
-#                HEADER
-# ============================================
-st.markdown('<div class="big-title">🤝 Agentic Research PRO</div>', unsafe_allow_html=True)
-st.markdown('<div class="subtitle">Multi-agent pipeline: search → scrape → chunk → embed → retrieve → write → export</div>', unsafe_allow_html=True)
-st.markdown("---")
+    # Example Topics Row (Clickable Chips)
+    st.markdown(
+        """
+        <div style="text-align:center; margin-top:16px; margin-bottom:10px; font-size:12px; font-weight:600; color:#8E8E93; text-transform:uppercase; letter-spacing:0.8px;">
+            Try exploring
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+    
+    chip_cols = st.columns(5)
+    sample_topics = [
+        "AI in Healthcare",
+        "Future of Work",
+        "Climate Tech",
+        "Quantum Computing",
+        "Solid-State Batteries",
+    ]
+    for idx, (c_col, s_top) in enumerate(zip(chip_cols, sample_topics)):
+        with c_col:
+            if st.button(s_top, key=f"chip_{idx}", use_container_width=True):
+                st.session_state["topic_input"] = s_top
+                st.rerun()
 
-# ============================================
-#              INPUT SECTION
-# ============================================
-col1, col2 = st.columns([2, 1])
-
-with col1:
-    topic = st.text_input("Enter a research topic")
-with col2:
-    depth = st.selectbox("Report Depth", ["Short", "Medium", "Long"])
-
-run_btn = st.button("Run Agentic Research 🚀", use_container_width=True)
-
-st.markdown("---")
-
-# ============================================
-#               UTILITY
-# ============================================
-def agent_status(name, status):
-    if status == "working":
-        st.markdown(f"<div class='agent-card working'>🟡 {name} — Working...</div>", unsafe_allow_html=True)
-    else:
-        st.markdown(f"<div class='agent-card done'>🟢 {name} — Completed</div>", unsafe_allow_html=True)
-
-
-# ============================================
-#               PIPELINE EXECUTION
-# ============================================
-if run_btn:
-
-    if not topic.strip():
-        st.error("Enter a topic first")
+# ==============================================================================
+# Screen 2: Live Research Experience (Warm White Command Center)
+# ==============================================================================
+if launch_clicked:
+    clean_topic = topic_query.strip()
+    if not clean_topic:
+        st.error("Please enter a research topic into the command bar before initiating research.")
         st.stop()
-
-    st.subheader("🤖 Agent Pipeline Execution")
-
-    # ------------------------------
-    # 1. Web Search Agent
-    # ------------------------------
-    agent_status("Web Search Agent", "working")
-
-    tavily_key = os.getenv("TAVILY_API_KEY")
-    search_resp = requests.post(
-        "https://api.tavily.com/search",
-        json={"api_key": tavily_key, "query": topic, "max_results": 5},
-        timeout=12
-    ).json()
-
-    urls = [r["url"] for r in search_resp.get("results", [])]
-
-    agent_status("Web Search Agent", "done")
-
-    # clickable links
-    st.markdown("### Sources Found:")
-    for u in urls:
-        st.markdown(f"<div class='source-link'><a href='{u}' target='_blank'>{u}</a></div>", unsafe_allow_html=True)
-
-    # ------------------------------
-    # 2. Scraper Agent
-    # ------------------------------
-    agent_status("Scraper Agent", "working")
-    scraped = scrape_urls(urls)
-    agent_status("Scraper Agent", "done")
-
-    st.write(f"Scraped {len(scraped)} articles")
-
-    if len(scraped) == 0:
-        st.error("No articles could be scraped. Try another topic.")
-        st.stop()
-
-    # ------------------------------
-    # 3. Chunker Agent
-    # ------------------------------
-    agent_status("Chunker Agent", "working")
-    chunks = []
-    for t in scraped:
-        chunks.extend(chunk_text(t))
-    agent_status("Chunker Agent", "done")
-    st.write(f"Chunk Count: {len(chunks)}")
-
-    # ------------------------------
-    # 4. Embedding Agent
-    # ------------------------------
-    agent_status("Embedding Agent", "working")
-    embedder = OpenAIEmbedder()
-    embeddings = embedder.embed(chunks)
-    agent_status("Embedding Agent", "done")
-
-    # ------------------------------
-    # 5. Vector Store
-    # ------------------------------
-    agent_status("Vector Store Agent", "working")
-    store = get_vector_store()
-    save_vectors(store, embeddings, chunks)
-    agent_status("Vector Store Agent", "done")
-
-    # ------------------------------
-    # 6. Retrieval Agent
-    # ------------------------------
-    agent_status("Retrieval Agent", "working")
-
-    try:
-        retrieved = query_vectors(store, topic, top_k=10)
-        if (
-            not retrieved
-            or "documents" not in retrieved
-            or len(retrieved["documents"]) == 0
-        ):
-            docs = chunks
-        else:
-            docs = retrieved["documents"][0]
-    except:
-        docs = chunks
-
-    agent_status("Retrieval Agent", "done")
-
-    # ------------------------------
-    # 7. Writer Agent
-    # ------------------------------
-    agent_status("Writer Agent", "working")
-    writer = Summarizer()
-    report = writer.summarize(topic, docs, depth)
-    agent_status("Writer Agent", "done")
 
     st.markdown("---")
-    st.subheader("📄 Final Research Report")
-    st.write(report)
+    st.markdown(f"""
+    <div class="glass-panel" style="margin-top:16px; margin-bottom:20px; border-left: 4px solid #1C1C1E; padding: 20px 28px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+            <div>
+                <div style="font-size:11.5px; font-weight:700; color:#8E8E93; text-transform:uppercase; letter-spacing:0.8px;">Active Research Session</div>
+                <div style="font-size:20px; font-weight:700; color:#1C1C1E; margin-top:2px;">
+                    "{clean_topic}"
+                </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px; background:rgba(28,28,30,0.06); padding:5px 14px; border-radius:9999px;">
+                <div class="live-dot"></div>
+                <span style="font-size:11.5px; font-weight:700; color:#1C1C1E; text-transform:uppercase; letter-spacing:0.6px;">INVESTIGATING</span>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
-    # ------------------------------
-    # 8. PDF Export
-    # ------------------------------
-    agent_status("Export Agent", "working")
+    # Telemetry containers
+    timeline_container = st.empty()
+    live_metrics_container = st.empty()
+    terminal_container = st.empty()
 
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_auto_page_break(auto=True, margin=15)
-    pdf.set_font("Arial", size=11)
+    event_logs = []
+    start_time = time.time()
+    tracked_metrics = {"sources": 0, "perspectives": 3, "iterations": 1}
 
-    for line in report.split("\n"):
-        pdf.multi_cell(0, 7, line)
+    def live_progress_handler(step_name: str, pct: float, details: str):
+        elapsed = int(time.time() - start_time)
+        timestamp = f"{elapsed//60:02d}:{elapsed%60:02d}"
+        
+        friendly_text = humanize_backend_message(step_name, details)
+        
+        event_logs.append({
+            "time": timestamp,
+            "stage": step_name,
+            "message": details,
+            "friendly_message": friendly_text,
+            "progress": pct,
+        })
 
-    pdf.output("research.pdf")
+        # Track sources from event messages
+        if "source" in details.lower() or "sources" in details.lower():
+            for w in details.split():
+                if w.isdigit():
+                    tracked_metrics["sources"] = max(tracked_metrics["sources"], int(w))
+        if "iteration" in step_name.lower():
+            parts = step_name.split("_")
+            if len(parts) > 1 and parts[1].isdigit():
+                tracked_metrics["iterations"] = int(parts[1])
 
-    agent_status("Export Agent", "done")
+        # Render stage timeline
+        timeline_container.markdown(render_live_timeline(step_name), unsafe_allow_html=True)
 
-    with open("research.pdf", "rb") as f:
-        st.download_button(
-            "📥 Download Research PDF",
-            f,
-            file_name="research.pdf",
-            use_container_width=True
+        # Render simple metrics
+        live_metrics_container.markdown(
+            render_live_metrics_row(
+                sources=tracked_metrics["sources"],
+                perspectives=tracked_metrics["perspectives"],
+                iterations=tracked_metrics["iterations"],
+            ),
+            unsafe_allow_html=True,
         )
+
+        # Render typewriter terminal
+        terminal_container.markdown(render_live_terminal(event_logs, current_message=friendly_text), unsafe_allow_html=True)
+
+    try:
+        # Initial render of command center
+        timeline_container.markdown(render_live_timeline("PLANNER"), unsafe_allow_html=True)
+        live_metrics_container.markdown(render_live_metrics_row(0, 3, 1), unsafe_allow_html=True)
+        terminal_container.markdown(render_live_terminal([], current_message="Formulating inquiry and understanding topic..."), unsafe_allow_html=True)
+
+        # Run backend orchestrator without modifying any logic
+        result: ResearchResult = run_research(
+            topic=clean_topic,
+            depth=st.session_state["depth_choice"],
+            progress_callback=live_progress_handler,
+        )
+
+        st.session_state["research_result"] = result
+
+        # Compile PDF Dossier
+        pdf_path = f"research_dossier_{result.session_id}.pdf"
+        generate_research_pdf(result, output_path=pdf_path)
+        st.session_state["pdf_path"] = pdf_path
+
+        # Final terminal update
+        timeline_container.markdown(render_live_timeline("COMPLETE"), unsafe_allow_html=True)
+        live_metrics_container.markdown(
+            render_live_metrics_row(
+                sources=len(result.accepted_sources),
+                perspectives=len(result.plan.research_dimensions) if result.plan else 3,
+                iterations=result.metrics.research_iterations if result.metrics else tracked_metrics["iterations"],
+            ),
+            unsafe_allow_html=True,
+        )
+        terminal_container.markdown(render_live_terminal(event_logs, current_message="Research completed & dossier verified."), unsafe_allow_html=True)
+
+        time.sleep(0.4)
+
+    except Exception as e:
+        st.error(f"Research execution interrupted: {e}")
+        st.exception(e)
+        st.stop()
+
+# ==============================================================================
+# Screen 3: Editorial Research Results Workspace
+# ==============================================================================
+active_result = st.session_state.get("research_result")
+active_pdf = st.session_state.get("pdf_path")
+
+if active_result:
+    render_results_workspace(active_result, pdf_path=active_pdf)
