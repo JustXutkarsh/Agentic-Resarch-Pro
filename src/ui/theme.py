@@ -75,6 +75,18 @@ body, .stApp {
     color-scheme: light !important;
 }
 
+/* Constrain App Canvas Width for Focused Apple Reading Experience */
+.main .block-container,
+div[data-testid="stMainBlockContainer"],
+.block-container {
+    max-width: 1240px !important;
+    padding-top: 1.25rem !important;
+    padding-bottom: 4rem !important;
+    padding-left: 2rem !important;
+    padding-right: 2rem !important;
+    margin: 0 auto !important;
+}
+
 /* Global Strict Light Contrast Overrides — Prevents Dark-Mode Bleed */
 .stMarkdown,
 .stMarkdown p,
@@ -1155,6 +1167,213 @@ div[data-testid="stDownloadButton"] > button:hover * {
 .report-paper strong, .report-paper b {
     color: #1C1C1E !important;
     font-weight: 750;
+}
+
+/* ==============================================================================
+   PROGRESSIVE DISCLOSURE — Clean Glass Evidence Accordion
+   ============================================================================== */
+details.glass-disclosure {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.94), rgba(255, 255, 255, 0.82));
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: var(--radius-md);
+    padding: 16px 22px;
+    margin-bottom: 14px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+    transition: all 0.25s ease;
+}
+
+details.glass-disclosure[open] {
+    background: #FFFFFF;
+    border-color: rgba(0, 102, 255, 0.35);
+    box-shadow: 0 8px 28px rgba(0, 102, 255, 0.08);
+}
+
+details.glass-disclosure summary {
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 15.5px;
+    color: #1C1C1E;
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+}
+
+details.glass-disclosure summary::-webkit-details-marker {
+    display: none;
+}
+
+details.glass-disclosure summary .disclosure-btn {
+    font-size: 12.5px;
+    font-weight: 750;
+    color: #0066FF;
+    background: rgba(0, 102, 255, 0.08);
+    border: 1px solid rgba(0, 102, 255, 0.25);
+    padding: 5px 14px;
+    border-radius: var(--radius-full);
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+details.glass-disclosure[open] summary .disclosure-btn {
+    background: #0066FF;
+    color: #FFFFFF;
+    border-color: #0066FF;
+}
+
+details.glass-disclosure .disclosure-body {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(0, 0, 0, 0.07);
+    font-size: 14px;
+    color: #2C2C2E;
+    line-height: 1.65;
+}
+
+/* ==============================================================================
+   EXAMINER SYSTEM X-RAY VIEW — Technical Architecture Mode
+   ============================================================================== */
+.system-xray-panel {
+    background: #0F172A;
+    color: #F8FAFC;
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    margin: 24px 0;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.system-xray-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    padding-bottom: 16px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.system-xray-title {
+    font-size: 19px;
+    font-weight: 800;
+    color: #38BDF8;
+    letter-spacing: -0.3px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.system-node-chain {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.system-node-card {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 12px;
+    padding: 14px 18px;
+    transition: all 0.2s ease;
+}
+
+.system-node-card:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: #38BDF8;
+}
+
+.system-node-step {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    color: #38BDF8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.system-node-name {
+    font-size: 14.5px;
+    font-weight: 750;
+    color: #FFFFFF;
+    margin-bottom: 4px;
+}
+
+.system-node-tech {
+    font-size: 12px;
+    color: #94A3B8;
+    line-height: 1.45;
+}
+
+/* ==============================================================================
+   WHY THIS IS DIFFERENT — Presentation Modal Styling
+   ============================================================================== */
+.why-diff-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin: 20px 0;
+}
+
+.why-diff-col {
+    background: #FFFFFF;
+    border: 1px solid rgba(0, 0, 0, 0.09);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.why-diff-col.highlight {
+    border: 2px solid #0066FF;
+    background: #FAFCFF;
+    box-shadow: 0 8px 30px rgba(0, 102, 255, 0.10);
+}
+
+.why-diff-title {
+    font-size: 16.5px;
+    font-weight: 800;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.why-step-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13.5px;
+    font-weight: 650;
+    color: #1C1C1E;
+    padding: 8px 12px;
+    background: rgba(0, 0, 0, 0.03);
+    border-radius: 8px;
+    margin-bottom: 6px;
+}
+
+.why-step-pill.highlight {
+    background: #EBF3FF;
+    color: #0052CC;
+    font-weight: 750;
+    border: 1px solid #BFDBFE;
+}
+
+.why-punchline-box {
+    background: #F0FDF4;
+    border-left: 4px solid #047857;
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-top: 16px;
+    font-size: 14.5px;
+    color: #064E3B;
+    line-height: 1.6;
+    font-weight: 600;
 }
 </style>"""
 
