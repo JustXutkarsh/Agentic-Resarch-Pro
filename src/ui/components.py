@@ -34,6 +34,20 @@ v2.0 PRO
 <div style="width:32px; height:32px; border-radius:50%; background:#1C1C1E; color:#FFFFFF; display:flex; align-items:center; justify-content:center; font-size:12.5px; font-weight:750;">
 U
 </div>
+</div>"""
+
+
+def render_active_research_banner(topic: str) -> str:
+    """Renders the active research indicator banner during live pipeline execution."""
+    return f"""<div style="background:rgba(238, 242, 255, 0.90); border:1px solid #C7D2FE; border-radius:14px; padding:14px 22px; display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:10px;">
+<div style="display:flex; align-items:center; gap:10px;">
+<div class="activity-live-pulse"></div>
+<span style="font-size:14.5px; font-weight:750; color:#1C1C1E;">
+Investigating: <span style="color:#0066FF;">"{escape(topic)}"</span>
+</span>
+</div>
+<div style="font-size:12px; font-weight:700; color:#4338CA; background:#EEF2FF; border:1px solid #C7D2FE; padding:3px 12px; border-radius:9999px;">
+● Pipeline Active
 </div>
 </div>"""
 
