@@ -25,28 +25,25 @@ def render_floating_nav() -> str:
     return """<div class="floating-nav">
 <div class="nav-brand">
 <span style="color:#0066FF; font-size:18px;">✦</span>
-<span style="color:#1C1C1E; font-weight:800; font-size:16.5px; letter-spacing:-0.3px;">Agentic Research</span>
+<span style="color:#1C1C1E; font-weight:800; font-size:16px; letter-spacing:-0.4px;">Agentic Research</span>
 </div>
-<div style="display:flex; align-items:center; gap:12px;">
-<span class="nav-pill-badge" style="background:#EEF2FF; color:#4338CA; border:1px solid #C7D2FE; font-size:11px; font-weight:750; padding:4px 10px; border-radius:9999px;">
-v2.0 PRO
-</span>
-<div style="width:32px; height:32px; border-radius:50%; background:#1C1C1E; color:#FFFFFF; display:flex; align-items:center; justify-content:center; font-size:12.5px; font-weight:750;">
-U
+<div style="display:flex; align-items:center; gap:10px;">
+<span style="background:#EEF2FF; color:#4338CA; border:1px solid #C7D2FE; font-size:10.5px; font-weight:750; padding:3px 10px; border-radius:9999px; letter-spacing:0.5px;">v2.0 PRO</span>
+<div style="width:30px; height:30px; border-radius:50%; background:linear-gradient(145deg, #2C2C2E, #1C1C1E); color:#FFFFFF; -webkit-text-fill-color:#FFFFFF; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:750; box-shadow:0 2px 6px rgba(0,0,0,0.15);">U</div>
 </div>
 </div>"""
 
 
 def render_active_research_banner(topic: str) -> str:
     """Renders the active research indicator banner during live pipeline execution."""
-    return f"""<div style="background:rgba(238, 242, 255, 0.90); border:1px solid #C7D2FE; border-radius:14px; padding:14px 22px; display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:10px;">
-<div style="display:flex; align-items:center; gap:10px;">
+    return f"""<div style="background:linear-gradient(135deg, rgba(238, 242, 255, 0.92), rgba(238, 242, 255, 0.80)); border:1px solid rgba(199, 210, 254, 0.60); border-radius:16px; padding:16px 24px; display:flex; justify-content:space-between; align-items:center; margin-bottom:22px; flex-wrap:wrap; gap:10px; backdrop-filter:blur(12px); box-shadow:0 4px 16px rgba(79, 70, 229, 0.06);">
+<div style="display:flex; align-items:center; gap:12px;">
 <div class="activity-live-pulse"></div>
-<span style="font-size:14.5px; font-weight:750; color:#1C1C1E;">
+<span style="font-size:14px; font-weight:750; color:#1C1C1E; letter-spacing:-0.2px;">
 Investigating: <span style="color:#0066FF;">"{escape(topic)}"</span>
 </span>
 </div>
-<div style="font-size:12px; font-weight:700; color:#4338CA; background:#EEF2FF; border:1px solid #C7D2FE; padding:3px 12px; border-radius:9999px;">
+<div style="font-size:11px; font-weight:750; color:#4338CA; background:rgba(238, 242, 255, 0.90); border:1px solid rgba(199, 210, 254, 0.60); padding:4px 14px; border-radius:9999px; letter-spacing:0.5px; text-transform:uppercase;">
 ● Pipeline Active
 </div>
 </div>"""
@@ -56,13 +53,13 @@ def render_hero_header() -> str:
     """Render the ultra-clean editorial hero section."""
     return """<div class="hero-box">
 <div class="hero-title">
-<span style="color:#0066FF;">✦</span> Agentic Research
+<span style="-webkit-text-fill-color:#0066FF;">✦</span> Agentic Research
 </div>
 <div class="hero-subtitle">
 Research beyond the obvious.
 </div>
-<div style="font-size:13.5px; color:#6E6E73; margin-top:8px; font-weight:450;">
-A semi-autonomous research system that iteratively expands its investigation when it detects evidence gaps or conflicting information.
+<div style="font-size:13px; color:#6E6E73; margin-top:10px; font-weight:450; line-height:1.55; max-width:500px; margin-left:auto; margin-right:auto; opacity:0.9;">
+A semi-autonomous system that iteratively expands its investigation<br>when it detects evidence gaps or conflicting information.
 </div>
 </div>"""
 
@@ -188,18 +185,18 @@ def render_exec_summary_card(summary_text: str, confidence_score: int, topic: st
         bar_fill = "linear-gradient(90deg, #9F1239, #F43F5E)"
         border_accent = "#F43F5E"
 
-    return f"""<div style="background:#FFFFFF; border:1px solid rgba(0,0,0,0.09); border-left:4px solid {border_accent}; border-radius:18px; padding:26px 30px; box-shadow:0 6px 24px rgba(0,0,0,0.05); margin-bottom:28px;">
+    return f"""<div style="background:rgba(255,255,255,0.98); border:1px solid rgba(0,0,0,0.06); border-left:4px solid {border_accent}; border-radius:18px; padding:26px 30px; box-shadow:0 4px 20px rgba(0,0,0,0.04), inset 0 1px 1px rgba(255,255,255,0.95); margin-bottom:28px;">
 <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px; flex-wrap:wrap; gap:16px;">
 <div>
-<div style="font-size:11.5px; font-weight:800; color:#6E6E73; text-transform:uppercase; letter-spacing:0.8px;">Executive Verdict</div>
-<div style="font-size:22px; font-weight:800; color:#1C1C1E; margin-top:2px;">{verdict_badge}</div>
+<div style="font-size:11px; font-weight:800; color:#6E6E73; text-transform:uppercase; letter-spacing:1px;">Executive Verdict</div>
+<div style="font-size:21px; font-weight:800; color:#1C1C1E; margin-top:4px; letter-spacing:-0.5px; line-height:1.3;">{verdict_badge}</div>
 </div>
 <div style="text-align:right;">
 <div style="font-size:13px; font-weight:650; color:#4A4A4F;">
 Evidence Confidence: <b style="color:#1C1C1E; font-size:18px; font-weight:800;">{confidence_score} / 100</b>
 </div>
-<div style="width:190px; height:8px; background:rgba(0,0,0,0.08); border-radius:9999px; overflow:hidden; margin-top:6px;">
-<div style="width:{confidence_score}%; height:100%; background:{bar_fill}; border-radius:9999px;"></div>
+<div style="width:190px; height:7px; background:rgba(0,0,0,0.06); border-radius:9999px; overflow:hidden; margin-top:6px;">
+<div style="width:{confidence_score}%; height:100%; background:{bar_fill}; border-radius:9999px; transition:width 0.6s ease;"></div>
 </div>
 <div style="font-size:10.5px; color:#6E6E73; margin-top:4px; max-width:260px; line-height:1.3;">
 Heuristic based on source quality, evidence coverage, claim support, agreement, and completeness.
@@ -207,7 +204,7 @@ Heuristic based on source quality, evidence coverage, claim support, agreement, 
 </div>
 </div>
 
-<div style="font-size:15.5px; color:#2C2C2E; line-height:1.7; font-weight:450; border-top:1px solid rgba(0,0,0,0.06); padding-top:14px;">
+<div style="font-size:15px; color:#2C2C2E; line-height:1.7; font-weight:450; border-top:1px solid rgba(0,0,0,0.05); padding-top:14px;">
 {escape(summary_text)}
 </div>
 </div>"""
@@ -371,24 +368,24 @@ def render_source_card_v2(src: Dict[str, Any]) -> str:
     elif any(k in url.lower() for k in ["bloomberg", "reuters", "wsj", "ft.com", "economist", "cnbc"]):
         cat_tag = "Economic & Financial News"
 
-    return f"""<div style="background:#FFFFFF; border:1px solid rgba(0,0,0,0.08); border-radius:14px; padding:18px 22px; margin-bottom:12px; box-shadow:0 2px 8px rgba(0,0,0,0.03);">
+    return f"""<div style="background:rgba(255,255,255,0.98); border:1px solid rgba(0,0,0,0.05); border-radius:16px; padding:18px 22px; margin-bottom:12px; box-shadow:0 2px 10px rgba(0,0,0,0.03), inset 0 1px 1px rgba(255,255,255,0.95); transition:all 0.3s ease;">
 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:8px;">
 <div style="display:flex; align-items:center; gap:8px;">
 <span style="font-size:13px; font-weight:750; color:#1C1C1E;">{domain}</span>
-<span style="background:rgba(0,0,0,0.05); color:#3A3A3C; font-size:11px; font-weight:600; padding:2px 8px; border-radius:9999px;">{cat_tag}</span>
+<span style="background:rgba(0,0,0,0.04); color:#3A3A3C; font-size:11px; font-weight:600; padding:2px 8px; border-radius:9999px;">{cat_tag}</span>
 </div>
-<span style="font-size:11.5px; font-weight:750; color:#047857; background:#E6F7F0; padding:2px 10px; border-radius:9999px;">
+<span style="font-size:11px; font-weight:750; color:#047857; background:rgba(230, 247, 240, 0.90); padding:3px 10px; border-radius:9999px; border:1px solid rgba(167, 243, 208, 0.50);">
 Authority: {score}%
 </span>
 </div>
-<div style="font-size:15px; font-weight:750; color:#1C1C1E; line-height:1.4; margin-bottom:6px;">
+<div style="font-size:14.5px; font-weight:750; color:#1C1C1E; line-height:1.4; margin-bottom:6px; letter-spacing:-0.2px;">
 {title}
 </div>
 <div style="font-size:13px; color:#3A3A3C; line-height:1.55; margin-bottom:12px;">
 {snippet}...
 </div>
 <div>
-<a href="{url}" target="_blank" style="display:inline-flex; align-items:center; gap:4px; font-size:12.5px; font-weight:700; color:#0052CC; text-decoration:none; background:#EBF3FF; border:1px solid #BFDBFE; padding:4px 12px; border-radius:9999px;">
+<a href="{url}" target="_blank" style="display:inline-flex; align-items:center; gap:4px; font-size:12px; font-weight:700; color:#0052CC; text-decoration:none; background:rgba(235, 243, 255, 0.90); border:1px solid rgba(191, 219, 254, 0.60); padding:4px 12px; border-radius:9999px; transition:all 0.2s ease;">
 Open Source ↗
 </a>
 </div>
@@ -490,3 +487,79 @@ A semi-autonomous research system that iteratively expands its investigation whe
 <b style="color:#F8FAFC;">Confidence Score Formula:</b> Confidence = 0.25 × Source Quality + 0.25 × Dimension Coverage + 0.25 × Claim Grounding + 0.15 × Consensus Agreement + 0.10 × Iteration Completeness = <span style="color:#38BDF8; font-weight:800;">{conf.overall_score if conf else 78} / 100</span>.
 </div>
 </div>"""
+
+
+def render_evidence_gaps_section(gaps: List[Any]) -> str:
+    """
+    Renders identified research gaps or verified complete coverage.
+    """
+    if not gaps:
+        return """<div style="background:rgba(240, 253, 244, 0.88); border:1px solid #BBF7D0; border-radius:14px; padding:18px 22px; margin-bottom:24px;">
+<div style="display:flex; align-items:center; gap:8px; font-weight:750; color:#047857; font-size:14px;">
+<span>✓</span> Comprehensive Dimensional Coverage Verified
+</div>
+<div style="font-size:13px; color:#1C1C1E; margin-top:4px; line-height:1.55;">
+No critical information voids or unaddressed perspectives detected across primary and follow-up retrieval iterations.
+</div>
+</div>"""
+
+    cards = []
+    for idx, g in enumerate(gaps):
+        dim = escape(getattr(g, "missing_dimension", "Research Dimension"))
+        reason = escape(getattr(g, "reason", "Additional evidence needed"))
+        query = escape(getattr(g, "suggested_query", ""))
+        priority = escape(getattr(g, "priority", "Medium")).upper()
+        p_badge_bg = "#FEF3C7" if priority in ["HIGH", "CRITICAL"] else "#F1F5F9"
+        p_badge_color = "#92400E" if priority in ["HIGH", "CRITICAL"] else "#475569"
+
+        cards.append(f"""<div style="background:#FFFFFF; border:1px solid rgba(0,0,0,0.07); border-left:3.5px solid #0066FF; border-radius:12px; padding:16px 20px; margin-bottom:12px; box-shadow:0 2px 8px rgba(0,0,0,0.03);">
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:8px;">
+<div style="font-size:14.5px; font-weight:750; color:#1C1C1E;">{idx+1}. {dim}</div>
+<span style="background:{p_badge_bg}; color:{p_badge_color}; font-size:11px; font-weight:750; padding:2px 8px; border-radius:9999px;">Priority: {priority}</span>
+</div>
+<div style="font-size:13px; color:#4A4A4F; line-height:1.55; margin-bottom:8px;">{reason}</div>
+<div style="font-size:12px; color:#1C1C1E; background:rgba(0,0,0,0.03); padding:8px 12px; border-radius:8px; font-family:'JetBrains Mono', monospace;">
+<b style="color:#0052CC;">Follow-up Query:</b> "{query}"
+</div>
+</div>""")
+    return "".join(cards)
+
+
+def render_limitations_callout(topic: str = "") -> str:
+    """
+    Renders academic limitations and scope boundaries for the investigation.
+    """
+    return """<div style="background:rgba(248, 250, 252, 0.95); border:1px solid rgba(226, 232, 240, 0.90); border-left:3.5px solid #64748B; border-radius:14px; padding:20px 24px; margin-bottom:28px;">
+<div style="font-size:14px; font-weight:750; color:#1E293B; margin-bottom:8px; display:flex; align-items:center; gap:8px;">
+<span>📋</span> Research Scope Boundaries & Methodological Limitations
+</div>
+<div style="font-size:13px; color:#475569; line-height:1.6;">
+This dossier synthesizes public empirical literature, institutional reporting, and domain preprints. Key limitations to consider:
+</div>
+<div style="margin-top:10px; display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:12px;">
+<div style="background:#FFFFFF; border:1px solid #E2E8F0; border-radius:10px; padding:12px 14px; font-size:12px; color:#334155; line-height:1.5;">
+<b>Temporal Horizon:</b> Real-time search reflects indexed sources available at execution time. Emerging developments may alter future trajectories.
+</div>
+<div style="background:#FFFFFF; border:1px solid #E2E8F0; border-radius:10px; padding:12px 14px; font-size:12px; color:#334155; line-height:1.5;">
+<b>Access Boundaries:</b> Restricted paywalled proprietary databases and non-public market data are excluded in favor of verifiable open citations.
+</div>
+<div style="background:#FFFFFF; border:1px solid #E2E8F0; border-radius:10px; padding:12px 14px; font-size:12px; color:#334155; line-height:1.5;">
+<b>Consensus Volatility:</b> In rapidly transitioning markets, empirical consensus remains provisional and subject to ongoing experimental falsification.
+</div>
+</div>
+</div>"""
+
+
+def render_permanent_footer() -> str:
+    """
+    Renders the permanent author attribution footer across generated dossiers.
+    """
+    return """<div style="border-top:1px solid rgba(0,0,0,0.08); margin-top:48px; padding-top:24px; padding-bottom:36px; text-align:center;">
+<div style="font-size:13px; font-weight:750; color:#1C1C1E; letter-spacing:0.2px;">
+✦ Agentic Research Dossier
+</div>
+<div style="font-size:12px; color:#6E6E73; margin-top:6px;">
+Built by - <span style="font-weight:750; color:#1C1C1E;">Utkarsh Pandey</span> &bull; Third Year Engineering Project Demonstration
+</div>
+</div>"""
+

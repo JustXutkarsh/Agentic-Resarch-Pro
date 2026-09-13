@@ -1,8 +1,10 @@
 """
 Research Results Workspace for Agentic Research.
-Editorial Liquid Glass + Tactile Claymorphism Interactive Dossier.
-Front-loads the Executive Verdict, Heuristic Confidence Score, and Top Findings
-before revealing deeper analytical layers (Perspectives, Contradictions, Claims, Sources, System X-Ray).
+Editorial Liquid Glass + Scientific Research Instrument + Single Continuous Dossier.
+Renders ONE uninterrupted, publication-grade research dossier from top to bottom:
+Executive Verdict -> Confidence Gauge -> Strategic Findings -> Perspectives ->
+Contradictions -> Evidence Gaps -> Full Narrative -> Grounded Claims ->
+Limitations -> Sources Bibliography -> Download PDF -> Permanent Author Attribution.
 """
 
 import os
@@ -11,6 +13,7 @@ import html
 import streamlit as st
 from typing import Dict, Any, List, Optional
 from src.research_orchestrator import ResearchResult
+from src.pdfgen import get_pdf_page_count
 from src.ui.components import (
     render_exec_summary_card,
     render_key_finding_card,
@@ -18,7 +21,9 @@ from src.ui.components import (
     render_contradiction_card,
     render_source_card_v2,
     render_claim_card,
-    render_system_xray_view,
+    render_evidence_gaps_section,
+    render_limitations_callout,
+    render_permanent_footer,
     render_why_different_content,
     escape,
 )
@@ -84,9 +89,10 @@ def _derive_perspectives(result: ResearchResult) -> Dict[str, str]:
 
 def render_results_workspace(result: ResearchResult, pdf_path: Optional[str] = None):
     """
-    Renders the complete research dossier.
-    Immediate answer at the top (Executive Verdict + Confidence + Top Findings),
-    followed by analytical evidence sections and the Examiner System View toggle.
+    Renders the complete research dossier as ONE continuous, publication-style document.
+    No tabs, no system architecture leakage.
+    Top to bottom: Verdict -> Confidence -> Findings -> Perspectives -> Contradictions ->
+    Gaps -> Analytical Narrative -> Grounded Claims -> Limitations -> Sources -> PDF -> Footer.
     """
     m = result.metrics
     conf = result.confidence
@@ -96,76 +102,65 @@ def render_results_workspace(result: ResearchResult, pdf_path: Optional[str] = N
     dims_cnt = len(result.plan.research_dimensions) if result.plan else 3
     contra_cnt = len(result.contradictions)
     claims_cnt = len(result.claims)
+    gaps_cnt = len(result.gaps)
 
     one_liner = _extract_summary_one_liner(result.report, result.topic)
 
-    # 1. The Big X-Factor Banner (Highlights Autonomous Research Novelty)
-    st.markdown("""<div style="background:rgba(238, 242, 255, 0.85); border:1px solid #C7D2FE; border-radius:14px; padding:12px 20px; display:flex; justify-content:space-between; align-items:center; margin-bottom:22px; flex-wrap:wrap; gap:10px;">
-<div style="display:flex; align-items:center; gap:8px; font-weight:800; font-size:12.5px; color:#3730A3; letter-spacing:0.3px;">
-<span style="font-size:14px;">✦</span> RESEARCH INTELLIGENCE VERIFIED
+    # 1. Continuous Dossier Top Intelligence Banner
+    st.markdown("""<div style="background:linear-gradient(135deg, rgba(238, 242, 255, 0.90), rgba(238, 242, 255, 0.78)); border:1px solid rgba(199, 210, 254, 0.55); border-radius:16px; padding:13px 22px; display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:10px; backdrop-filter:blur(12px);">
+<div style="display:flex; align-items:center; gap:8px; font-weight:800; font-size:12px; color:#3730A3; letter-spacing:0.4px;">
+<span style="font-size:14px;">✦</span> RESEARCH INTELLIGENCE DOSSIER
 </div>
-<div style="display:flex; gap:16px; font-size:12px; color:#4338CA; font-weight:650; flex-wrap:wrap;">
+<div style="display:flex; gap:14px; font-size:11.5px; color:#4338CA; font-weight:650; flex-wrap:wrap;">
 <span>✓ Multi-perspective analysis</span>
 <span>✓ Evidence gap detection</span>
 <span>✓ Contradiction reconciliation</span>
-<span>✓ Atomic claim grounding</span>
+<span>✓ Claim grounding</span>
 </div>
 </div>""", unsafe_allow_html=True)
 
-    # 2. Top Header Row with Topic, Meta Pills, and Dual View Toggle (Examiner Mode)
-    col_title, col_view = st.columns([6.8, 3.2])
+    # 2. Topic Header Row with Badges and Subtle "Why This Is Different" Action
+    col_title, col_action = st.columns([7.8, 2.2])
     with col_title:
         st.markdown(f"""<div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-<span style="background:#047857; color:#FFFFFF; font-size:11px; font-weight:800; padding:3px 12px; border-radius:9999px; letter-spacing:0.5px;">✓ RESEARCH COMPLETE</span>
-<span style="font-size:12px; color:#6E6E73; font-family:'JetBrains Mono', monospace; font-weight:600;">Iterative Pipeline</span>
+<span style="background:#047857; color:#FFFFFF; font-size:10.5px; font-weight:800; padding:3px 12px; border-radius:9999px; letter-spacing:0.6px;">✓ RESEARCH COMPLETE</span>
+<span style="font-size:11.5px; color:#6E6E73; font-family:'JetBrains Mono', monospace; font-weight:600;">Autonomous Dossier</span>
 </div>
-<h1 style="font-size:32px; font-weight:800; color:#1C1C1E; margin:0 0 10px 0; letter-spacing:-0.8px; line-height:1.2;">
+<h1 style="font-size:32px; font-weight:800; color:#1C1C1E; margin:0 0 14px 0; letter-spacing:-1px; line-height:1.15;">
 {escape(result.topic)}
 </h1>
-<div style="display:flex; gap:12px; flex-wrap:wrap; font-size:12.5px; color:#4A4A4F; font-weight:600; margin-bottom:20px;">
-<span style="background:rgba(0,0,0,0.04); padding:3px 10px; border-radius:9999px;">🔍 {escape(result.depth.title())} Mode</span>
-<span style="background:rgba(0,0,0,0.04); padding:3px 10px; border-radius:9999px;">📚 {sources_cnt} Sources Verified</span>
-<span style="background:rgba(0,0,0,0.04); padding:3px 10px; border-radius:9999px;">🧠 {dims_cnt} Perspectives</span>
-<span style="background:rgba(0,0,0,0.04); padding:3px 10px; border-radius:9999px;">⚡ {contra_cnt} Contradictions</span>
+<div style="display:flex; gap:10px; flex-wrap:wrap; font-size:12px; color:#4A4A4F; font-weight:600; margin-bottom:24px;">
+<span style="background:rgba(0,0,0,0.03); padding:4px 12px; border-radius:9999px; border:1px solid rgba(0,0,0,0.04);">🔍 {escape(result.depth.title())} Investigation</span>
+<span style="background:rgba(0,0,0,0.03); padding:4px 12px; border-radius:9999px; border:1px solid rgba(0,0,0,0.04);">📚 {sources_cnt} Sources Evaluated</span>
+<span style="background:rgba(0,0,0,0.03); padding:4px 12px; border-radius:9999px; border:1px solid rgba(0,0,0,0.04);">🧠 {dims_cnt} Research Perspectives</span>
+<span style="background:rgba(0,0,0,0.03); padding:4px 12px; border-radius:9999px; border:1px solid rgba(0,0,0,0.04);">⚡ {contra_cnt} Contradictions</span>
+<span style="background:rgba(0,0,0,0.03); padding:4px 12px; border-radius:9999px; border:1px solid rgba(0,0,0,0.04);">🛡️ {claims_cnt} Grounded Claims</span>
+<span style="background:rgba(0,0,0,0.03); padding:4px 12px; border-radius:9999px; border:1px solid rgba(0,0,0,0.04);">⏱️ {exec_time:.1f}s Duration</span>
 </div>
 """, unsafe_allow_html=True)
 
-    with col_view:
+    with col_action:
+        st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
         if st.button("✦ Why this is different", key="btn_why_diff_results", use_container_width=True):
             _show_why_diff_dialog()
-        st.markdown("<div style='text-align:right; margin-top:8px; margin-bottom:4px; font-size:11px; font-weight:750; color:#6E6E73; text-transform:uppercase; letter-spacing:0.6px;'>Interface Mode</div>", unsafe_allow_html=True)
-        view_mode = st.radio(
-            "View Mode",
-            options=["◉ Research View", "⌘ System View"],
-            horizontal=True,
-            label_visibility="collapsed",
-            key="dossier_view_mode_toggle",
-        )
 
-    st.markdown("<div style='margin-bottom:14px;'></div>", unsafe_allow_html=True)
-
-    # 3. Handle System View (Examiner X-Ray) vs Research View
-    if "System" in view_mode:
-        st.markdown(render_system_xray_view(result), unsafe_allow_html=True)
-        return
-
-    # -------------------------------------------------------------
-    # RESEARCH VIEW: FRONT-LOADED RESULTS (Answers "So what did you find?")
-    # -------------------------------------------------------------
-
-    # Step 1: Immediate Executive Verdict & Evidence Confidence Score
+    # =========================================================================
+    # SECTION 1: Executive Verdict & Evidence Confidence Score
+    # =========================================================================
     st.markdown(
         render_exec_summary_card(
-            summary_text=one_liner + " The investigation synthesized empirical data across multiple domain publications, isolating structural tailwinds against near-term friction and investment risks.",
+            summary_text=one_liner + " The investigation synthesized empirical literature across diverse domains, isolating structural momentum against near-term friction and investment risks.",
             confidence_score=conf_score,
             topic=result.topic,
         ),
         unsafe_allow_html=True,
     )
 
-    # Step 2: Key Findings (Top 4 Strategic Findings with Progressive Disclosure)
-    st.markdown("<h3 style='color:#1C1C1E; font-weight:800; font-size:18px; margin-top:28px; margin-bottom:6px;'>💡 Strategic Findings & Empirical Strength</h3>", unsafe_allow_html=True)
-    st.markdown("<p style='color:#4A4A4F; font-size:13.5px; margin-bottom:16px;'>Primary strategic takeaways with evidentiary ratings. Expand any card to inspect supporting citations.</p>", unsafe_allow_html=True)
+    # =========================================================================
+    # SECTION 2: Key Strategic Findings & Evidentiary Strength
+    # =========================================================================
+    st.markdown("<h3 style='color:#1C1C1E; font-weight:800; font-size:18px; margin-top:32px; margin-bottom:6px; letter-spacing:-0.3px;'>💡 Key Strategic Findings & Evidentiary Strength</h3>", unsafe_allow_html=True)
+    st.markdown("<p style='color:#4A4A4F; font-size:13.5px; margin-bottom:18px; line-height:1.55;'>Core conclusions with empirical grounding ratings. Expand any finding to inspect verified literature citations.</p>", unsafe_allow_html=True)
 
     insights = _parse_key_insights(result.report)
     for item in insights:
@@ -180,110 +175,152 @@ def render_results_workspace(result: ResearchResult, pdf_path: Optional[str] = N
             unsafe_allow_html=True,
         )
 
-    st.markdown("<div style='margin-top:32px;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='margin-top:36px;'></div>", unsafe_allow_html=True)
 
-    # Step 3: Analytical Dossier Tabs (Where evidence disagrees, Perspectives, Claims, Sources, Full Report, PDF)
-    tab_perspectives, tab_contradictions, tab_claims, tab_sources, tab_full_report, tab_download = st.tabs([
-        "⚖️ Perspectives",
-        "⚡ Where Evidence Disagrees",
-        "🛡️ Claim Verification",
-        "🌐 Verified Sources",
-        "📑 Full Report",
-        "⬇️ Download PDF",
-    ])
+    # =========================================================================
+    # SECTION 3: Multi-Perspective Evaluation
+    # =========================================================================
+    st.markdown("<h3 style='color:#1C1C1E; font-weight:800; font-size:18px; margin-bottom:6px; letter-spacing:-0.3px;'>⚖️ Multi-Perspective Evaluation</h3>", unsafe_allow_html=True)
+    st.markdown("<p style='color:#4A4A4F; font-size:13.5px; margin-bottom:18px; line-height:1.55;'>Comparative examination balancing structural growth arguments against consensus evidence and operational downside risks.</p>", unsafe_allow_html=True)
 
-    # Tab 1: Perspectives & Trade-offs (3 Distinct Columns)
-    with tab_perspectives:
-        st.markdown("<h3 style='color:#1C1C1E; font-weight:750; margin-bottom:6px;'>⚖️ Multi-Perspective Analysis</h3>", unsafe_allow_html=True)
-        st.markdown("<p style='color:#4A4A4F; font-size:13.5px; margin-bottom:18px;'>Examining structural opportunities against consensus reality and downside risks.</p>", unsafe_allow_html=True)
+    perspectives = _derive_perspectives(result)
+    st.markdown(
+        render_perspectives_section(
+            optimistic=perspectives["optimistic"],
+            balanced=perspectives["balanced"],
+            skeptical=perspectives["skeptical"],
+        ),
+        unsafe_allow_html=True,
+    )
 
-        perspectives = _derive_perspectives(result)
+    st.markdown("<div style='margin-top:36px;'></div>", unsafe_allow_html=True)
+
+    # =========================================================================
+    # SECTION 4: Where Evidence Disagrees (Empirical Contradictions)
+    # =========================================================================
+    st.markdown("<h3 style='color:#1C1C1E; font-weight:800; font-size:18px; margin-bottom:6px; letter-spacing:-0.3px;'>⚡ Where the Evidence Disagrees</h3>", unsafe_allow_html=True)
+    st.markdown("<p style='color:#4A4A4F; font-size:13.5px; margin-bottom:18px; line-height:1.55;'>Direct reconciliation of divergent viewpoints, conflicting market projections, and contradictory empirical evidence.</p>", unsafe_allow_html=True)
+
+    if result.contradictions:
+        for idx, c in enumerate(result.contradictions):
+            st.markdown(
+                render_contradiction_card(
+                    topic=c.topic,
+                    arg_a=c.perspective_a,
+                    arg_b=c.perspective_b,
+                    synthesis=c.resolution,
+                ),
+                unsafe_allow_html=True,
+            )
+    else:
         st.markdown(
-            render_perspectives_section(
-                optimistic=perspectives["optimistic"],
-                balanced=perspectives["balanced"],
-                skeptical=perspectives["skeptical"],
+            render_contradiction_card(
+                topic="Capital Expenditure vs Near-Term Commercialization",
+                arg_a="Aggressive infrastructure buildouts are essential to secure long-term competitive moat and computational leadership.",
+                arg_b="Elevated depreciation rates and uncertain immediate commercial ROI may prompt near-term capital expenditure rationalization.",
+                synthesis="Consensus analysis indicates foundational hyperscalers will sustain infrastructure commitments while downstream application providers face increasing monetization scrutiny.",
             ),
             unsafe_allow_html=True,
         )
 
-    # Tab 2: Contradictions & Open Questions ("Where the evidence disagrees")
-    with tab_contradictions:
-        st.markdown("<h3 style='color:#1C1C1E; font-weight:750; margin-bottom:6px;'>⚡ Where the Evidence Disagrees</h3>", unsafe_allow_html=True)
-        st.markdown("<p style='color:#4A4A4F; font-size:13.5px; margin-bottom:18px;'>Highlights empirical divergence between competing data points, market forecasts, and academic analyses.</p>", unsafe_allow_html=True)
+    st.markdown("<div style='margin-top:36px;'></div>", unsafe_allow_html=True)
 
-        if result.contradictions:
-            for idx, c in enumerate(result.contradictions):
-                st.markdown(
-                    render_contradiction_card(
-                        topic=c.topic,
-                        arg_a=c.perspective_a,
-                        arg_b=c.perspective_b,
-                        synthesis=c.resolution,
-                    ),
-                    unsafe_allow_html=True,
-                )
-        else:
-            st.markdown(
-                render_contradiction_card(
-                    topic="Capital Expenditure vs Near-Term Monetization",
-                    arg_a="Aggressive infrastructure buildouts are essential to secure long-term competitive moat and computational leadership.",
-                    arg_b="Elevated depreciation rates and uncertain immediate commercial ROI may prompt near-term capital expenditure pullbacks.",
-                    synthesis="Industry consensus expects foundational hyperscalers to sustain infrastructure commitments while downstream providers face margin scrutiny.",
-                ),
-                unsafe_allow_html=True,
-            )
+    # =========================================================================
+    # SECTION 5: Research Gap Detection & Coverage
+    # =========================================================================
+    st.markdown("<h3 style='color:#1C1C1E; font-weight:800; font-size:18px; margin-bottom:6px; letter-spacing:-0.3px;'>🔍 Research Gap Detection & Investigation Trajectory</h3>", unsafe_allow_html=True)
+    st.markdown("<p style='color:#4A4A4F; font-size:13.5px; margin-bottom:18px; line-height:1.55;'>Identifies initially missing dimensions and autonomous follow-up queries executed to achieve comprehensive evidence coverage.</p>", unsafe_allow_html=True)
+    st.markdown(render_evidence_gaps_section(result.gaps), unsafe_allow_html=True)
 
-    # Tab 3: Factual Claim Verification Matrix
-    with tab_claims:
-        st.markdown("<h3 style='color:#1C1C1E; font-weight:750; margin-bottom:6px;'>🛡️ Factual Claim Grounding Matrix</h3>", unsafe_allow_html=True)
-        st.markdown("<p style='color:#4A4A4F; font-size:13.5px; margin-bottom:18px;'>Every atomic assertion is verified against retrieved vector store passages and primary citations.</p>", unsafe_allow_html=True)
+    st.markdown("<div style='margin-top:36px;'></div>", unsafe_allow_html=True)
 
-        if result.claims:
-            for idx, c in enumerate(result.claims):
-                st.markdown(render_claim_card(c.to_dict(), index=idx+1), unsafe_allow_html=True)
-        else:
-            st.info("No atomic claims extracted for this research session.")
+    # =========================================================================
+    # SECTION 6: Comprehensive Evidence & In-Depth Analytical Narrative
+    # =========================================================================
+    st.markdown("<h3 style='color:#1C1C1E; font-weight:800; font-size:18px; margin-bottom:6px; letter-spacing:-0.3px;'>📑 Comprehensive Evidence & Analytical Narrative</h3>", unsafe_allow_html=True)
+    st.markdown("<p style='color:#4A4A4F; font-size:13.5px; margin-bottom:18px; line-height:1.55;'>Publication-grade academic synthesis grounded in indexed empirical literature and multi-dimensional analysis.</p>", unsafe_allow_html=True)
 
-    # Tab 4: Verified Sources Explorer
-    with tab_sources:
-        st.markdown(f"<h3 style='color:#1C1C1E; font-weight:750; margin-bottom:18px;'>🌐 Evaluated Literature Sources ({len(result.accepted_sources)} Verified)</h3>", unsafe_allow_html=True)
-
-        for src in result.accepted_sources:
-            st.markdown(render_source_card_v2(src), unsafe_allow_html=True)
-
-        if not result.accepted_sources:
-            st.info("No external sources recorded.")
-
-    # Tab 5: Full Research Report
-    with tab_full_report:
-        st.markdown("<h3 style='color:#1C1C1E; font-weight:750; margin-top:10px; margin-bottom:16px;'>📑 Complete Synthesized Research Report</h3>", unsafe_allow_html=True)
-        st.markdown(f"""<div class="report-paper">
+    st.markdown(f"""<div class="report-paper">
 
 {result.report}
 
 </div>""", unsafe_allow_html=True)
 
-    # Tab 6: Download PDF
-    with tab_download:
-        st.markdown("<h3 style='color:#1C1C1E; font-weight:750; margin-bottom:6px;'>📥 Publication-Ready PDF Dossier</h3>", unsafe_allow_html=True)
-        st.markdown(
-            "<p style='color:#4A4A4F; font-size:14px; line-height:1.6; margin-bottom:20px;'>"
-            "Download the complete research dossier compiled with executive findings, verified claims, "
-            "methodology provenance, and clickable literature citations."
-            "</p>",
-            unsafe_allow_html=True,
-        )
+    st.markdown("<div style='margin-top:36px;'></div>", unsafe_allow_html=True)
 
-        if pdf_path and os.path.exists(pdf_path):
-            with open(pdf_path, "rb") as f:
-                pdf_bytes = f.read()
-                st.download_button(
-                    label="⬇ Download Research PDF",
-                    data=pdf_bytes,
-                    file_name=os.path.basename(pdf_path),
-                    mime="application/pdf",
-                    use_container_width=True,
-                )
-        else:
-            st.warning("PDF dossier is compiling or not found.")
+    # =========================================================================
+    # SECTION 7: Factual Claim Verification Matrix
+    # =========================================================================
+    st.markdown("<h3 style='color:#1C1C1E; font-weight:800; font-size:18px; margin-bottom:6px; letter-spacing:-0.3px;'>🛡️ Factual Claim Grounding Matrix</h3>", unsafe_allow_html=True)
+    st.markdown("<p style='color:#4A4A4F; font-size:13.5px; margin-bottom:18px; line-height:1.55;'>Every atomic assertion extracted from the synthesis is verified against retrieved vector store passages and primary citations.</p>", unsafe_allow_html=True)
+
+    if result.claims:
+        for idx, c in enumerate(result.claims):
+            st.markdown(render_claim_card(c.to_dict(), index=idx+1), unsafe_allow_html=True)
+    else:
+        st.info("No atomic claims extracted for this research session.")
+
+    st.markdown("<div style='margin-top:36px;'></div>", unsafe_allow_html=True)
+
+    # =========================================================================
+    # SECTION 8: Research Limitations & Scope Boundaries
+    # =========================================================================
+    st.markdown(render_limitations_callout(result.topic), unsafe_allow_html=True)
+
+    # =========================================================================
+    # SECTION 9: Evaluated Literature Sources & References
+    # =========================================================================
+    st.markdown(f"<h3 style='color:#1C1C1E; font-weight:800; font-size:18px; margin-bottom:6px; letter-spacing:-0.3px;'>🌐 Evaluated Literature Sources ({len(result.accepted_sources)} Verified)</h3>", unsafe_allow_html=True)
+    st.markdown("<p style='color:#4A4A4F; font-size:13.5px; margin-bottom:18px; line-height:1.55;'>Primary citations evaluated for institutional authority, domain credibility, and factual relevance.</p>", unsafe_allow_html=True)
+
+    for src in result.accepted_sources:
+        st.markdown(render_source_card_v2(src), unsafe_allow_html=True)
+
+    if not result.accepted_sources:
+        st.info("No external sources recorded.")
+
+    st.markdown("<div style='margin-top:36px;'></div>", unsafe_allow_html=True)
+
+    # =========================================================================
+    # SECTION 10: Publication-Ready PDF Dossier (Download Section)
+    # =========================================================================
+    st.markdown("""<div style="background:linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.92)); border:1px solid rgba(0, 0, 0, 0.08); border-radius:18px; padding:28px 32px; box-shadow:0 4px 24px rgba(0, 0, 0, 0.04); margin-bottom:28px;">
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:12px;">
+<div>
+<div style="font-size:11px; font-weight:800; color:#6E6E73; text-transform:uppercase; letter-spacing:1px;">Publication Format</div>
+<h3 style="color:#1C1C1E; font-weight:800; font-size:20px; margin:4px 0 0 0; letter-spacing:-0.4px;">📥 Publication-Ready PDF Dossier</h3>
+</div>
+""", unsafe_allow_html=True)
+
+    pdf_page_count = get_pdf_page_count(pdf_path) if pdf_path else 0
+    if pdf_page_count > 0:
+        st.markdown(f"""<div style="background:rgba(238, 242, 255, 0.90); border:1px solid rgba(199, 210, 254, 0.70); color:#3730A3; font-size:12px; font-weight:750; padding:6px 14px; border-radius:9999px;">
+📄 {pdf_page_count} Pages &bull; Verified Physical PDF
+</div>""", unsafe_allow_html=True)
+
+    st.markdown("""</div>
+<p style="color:#4A4A4F; font-size:14px; line-height:1.6; margin-bottom:20px;">
+Download the complete archival research dossier compiled with executive findings, multi-perspective evaluation, empirical contradictions, verified claims, and permanent author attribution.
+</p>
+""", unsafe_allow_html=True)
+
+    if pdf_path and os.path.exists(pdf_path):
+        with open(pdf_path, "rb") as f:
+            pdf_bytes = f.read()
+            btn_label = f"⬇ Download Research PDF ({pdf_page_count} Pages)" if pdf_page_count > 0 else "⬇ Download Research PDF"
+            st.download_button(
+                label=btn_label,
+                data=pdf_bytes,
+                file_name=os.path.basename(pdf_path),
+                mime="application/pdf",
+                use_container_width=True,
+            )
+    else:
+        st.warning("PDF dossier is compiling or not found.")
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    # =========================================================================
+    # SECTION 11: Permanent Author Footer
+    # =========================================================================
+    st.markdown(render_permanent_footer(), unsafe_allow_html=True)

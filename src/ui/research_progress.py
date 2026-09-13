@@ -174,16 +174,17 @@ def render_7_stage_journey(current_stage: str) -> str:
 </div>"""
 
 
-def render_live_activity_terminal(event_logs: List[Dict[str, Any]], current_message: str = "") -> str:
+def render_live_activity_terminal(event_logs: List[Dict[str, Any]], current_message: str = "", elapsed_seconds: float = 0.0) -> str:
     """
     Renders live real-time research activity lines in warm white liquid glass.
-    Completed lines settle into place cleanly; active line has blinking cursor ▌.
-    Strictly left-aligned HTML elements prevent Markdown pre/code block parsing.
+    The header tracks the ongoing elapsed wall-clock time (MM:SS),
+    while completed lines settle into place with their exact relative event timestamp (+MM:SS).
+    Active line has blinking cursor ▌.
     """
     lines_html = []
     # Show last 8 events for comfortable reading without layout jumping
     for log in event_logs[-8:]:
-        t = log.get("time", "00:00")
+        t = log.get("time", "+00:00")
         msg = html.escape(log.get("friendly_message") or log.get("message", ""))
         lines_html.append(f"""<div class="activity-line">
 <span class="activity-time">{t}</span>
@@ -191,18 +192,21 @@ def render_live_activity_terminal(event_logs: List[Dict[str, Any]], current_mess
 <span>{msg}</span>
 </div>""")
 
+    elapsed_int = int(elapsed_seconds)
+    elapsed_str = f"{elapsed_int//60:02d}:{elapsed_int%60:02d}"
+
     active_line_html = ""
     if current_message:
         clean_curr = html.escape(current_message)
         active_line_html = f"""<div class="activity-line active-line" style="margin-top:6px;">
-<span class="activity-time" style="color:#0066FF; font-weight:700;">now</span>
+<span class="activity-time" style="color:#0066FF; font-weight:700;">+{elapsed_str}</span>
 <span style="color:#0066FF; font-weight:800;">●</span>
 <span>{clean_curr}</span>
 <span class="activity-cursor">▌</span>
 </div>"""
     else:
-        active_line_html = """<div class="activity-line" style="margin-top:6px; color:#6E6E73;">
-<span class="activity-time">...</span>
+        active_line_html = f"""<div class="activity-line" style="margin-top:6px; color:#6E6E73;">
+<span class="activity-time">+{elapsed_str}</span>
 <span style="color:#6E6E73;">●</span>
 <span>Executing autonomous research pipeline</span>
 <span class="activity-cursor">▌</span>
@@ -216,8 +220,8 @@ def render_live_activity_terminal(event_logs: List[Dict[str, Any]], current_mess
 <div class="activity-live-pulse"></div>
 <span>Autonomous Pipeline Activity</span>
 </div>
-<div style="font-size:12px; font-weight:700; color:#4A4A4F; font-family:'JetBrains Mono', monospace;">
-Live Event Telemetry
+<div style="font-size:12.5px; font-weight:750; color:#1C1C1E; font-family:'JetBrains Mono', monospace; background:rgba(0,0,0,0.04); padding:3px 10px; border-radius:8px;">
+⏱️ Elapsed: <span style="color:#0066FF;">{elapsed_str}</span>
 </div>
 </div>
 <div>
@@ -225,6 +229,7 @@ Live Event Telemetry
 {active_line_html}
 </div>
 </div>"""
+
 
 
 def render_4_live_stats(sources: int = 0, perspectives: int = 3, evidence_count: int = 0, iterations: int = 1) -> str:
