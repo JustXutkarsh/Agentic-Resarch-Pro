@@ -17,6 +17,7 @@ from openai import OpenAI
 from src.config import ResearchConfig, LLM_MODEL
 from src.chroma_store import retrieve_relevant_chunks
 from chromadb.api.models.Collection import Collection
+from src.llm import LLMProvider, get_llm_provider, OpenAICompatibleClientAdapter
 
 logger = logging.getLogger(__name__)
 
@@ -48,50 +49,81 @@ class ClaimVerification:
     source_urls: List[str] = field(default_factory=list)
     source_count: int = 0
 
+    @property
+    def score(self) -> float:
+        return self.support_score
+
+    @property
+    def verification_status(self) -> str:
+        return self.support_label
+
+    @property
+    def supporting_evidence(self) -> str:
+        return " ".join(self.evidence_chunks)
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             "claim": self.claim,
             "support_label": self.support_label,
             "support_score": round(self.support_score, 2),
+            "score": round(self.support_score, 2),
+            "verification_status": self.support_label,
+            "supporting_evidence": self.supporting_evidence,
             "reasoning": self.reasoning,
             "evidence_chunks": self.evidence_chunks,
+            "evidence_snippets": self.evidence_chunks,
             "source_urls": self.source_urls,
             "source_count": self.source_count,
         }
 
 
+def _score_claim_importance(claim: str) -> float:
+    """Heuristic scoring of claim importance based on specificity and quantitative markers."""
+    score = 1.0
+    # Higher priority for claims with numbers, statistics, percentages
+    if re.search(r"\b\d+(?:\.\d+)?%?", claim):
+        score += 0.5
+    if re.search(r"\$\b|\bUSD\b|\beuro\b|\byear\b|\b20\d\d\b", claim, re.IGNORECASE):
+        score += 0.3
+    # Penalize overly short or overly long claims
+    words = len(claim.split())
+    if 8 <= words <= 30:
+        score += 0.4
+    return score
+
+
 def _prioritize_claims(claims: List[str], max_claims: int) -> List[str]:
-    """
-    Prioritize central, quantitative, and high-impact claims.
-    Prefers claims with numbers, percentages, or key assertion verbs.
-    """
+    """Sort claims by importance heuristic and return top max_claims."""
     if len(claims) <= max_claims:
         return claims
-
-    def claim_priority(c: str) -> int:
-        score = 0
-        # Quantitative indicators
-        if re.search(r"(\d+[\.,]?\d*%)|(\$\d+)|(\b\d{2,}\b)", c):
-            score += 3
-        # Key assertion verbs
-        if any(w in c.lower() for w in ["increase", "decrease", "reduce", "grow", "demonstrate", "found", "exceed"]):
-            score += 2
-        # Reasonable assertion length
-        if 40 <= len(c) <= 200:
-            score += 1
-        return score
-
-    sorted_claims = sorted(claims, key=claim_priority, reverse=True)
-    return sorted_claims[:max_claims]
+    scored = [(c, _score_claim_importance(c)) for c in claims]
+    scored.sort(key=lambda x: x[1], reverse=True)
+    return [c for c, _ in scored[:max_claims]]
 
 
 class ClaimVerifier:
     """Extracts factual assertions and verifies their grounding against retrieved evidence."""
 
-    def __init__(self, client: Optional[OpenAI] = None):
+    def __init__(
+        self,
+        client: Optional[Any] = None,
+        llm_provider: Optional[LLMProvider] = None,
+        session_id: Optional[str] = None,
+    ):
         self.client = client
+        self._provider = llm_provider
+        self.session_id = session_id
 
-    def _get_client(self) -> OpenAI:
+    def _get_provider(self) -> LLMProvider:
+        if self._provider is not None:
+            return self._provider
+        if self.client is not None:
+            self._provider = OpenAICompatibleClientAdapter(self.client, model=LLM_MODEL)
+            return self._provider
+        self._provider = get_llm_provider(session_id=self.session_id)
+        return self._provider
+
+    def _get_client(self) -> Any:
         if self.client is None:
             self.client = OpenAI()
         return self.client
@@ -123,18 +155,16 @@ REQUIREMENTS:
 }}
 """
         try:
-            client = self._get_client()
-            resp = client.chat.completions.create(
-                model=LLM_MODEL,
+            provider = self._get_provider()
+            data = provider.generate_structured(
                 messages=[
                     {"role": "system", "content": "You are a precise fact extraction agent."},
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.1,
-                response_format={"type": "json_object"},
+                operation="claim_extraction",
             )
-            raw = resp.choices[0].message.content or "{}"
-            extracted = json.loads(raw).get("claims", [])
+            extracted = data.get("claims", [])
             clean_claims = [c.strip() for c in extracted if c and len(c.strip()) > 15]
             return _prioritize_claims(clean_claims, max_claims)
 
@@ -225,18 +255,16 @@ Return JSON strictly in this format:
 }}
 """
         try:
-            client = self._get_client()
-            resp = client.chat.completions.create(
-                model=LLM_MODEL,
+            provider = self._get_provider()
+            data = provider.generate_structured(
                 messages=[
                     {"role": "system", "content": "You are a strict, objective research evidence verifier."},
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.1,
-                response_format={"type": "json_object"},
+                operation="claim_verification",
             )
-            raw = resp.choices[0].message.content or "{}"
-            evals = json.loads(raw).get("evaluations", [])
+            evals = data.get("evaluations", [])
             eval_by_id = {item.get("id"): item for item in evals if "id" in item}
 
             results = []

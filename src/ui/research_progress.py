@@ -115,6 +115,8 @@ def humanize_backend_message(step_name: str, raw_msg: str) -> str:
         .replace("ChromaDB", "Vector Store")
         .replace("all-MiniLM-L6-v2", "Semantic Embedder")
         .replace("GPT-4o", "Synthesizer")
+        .replace("Nemotron", "Synthesizer")
+        .replace("NVIDIA", "Synthesizer")
     )
     return cleaned
 

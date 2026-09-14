@@ -9,7 +9,7 @@ import json
 import logging
 import re
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import List, Optional, Any
 from openai import OpenAI
 from src.config import ResearchConfig, get_research_config, LLM_MODEL
 
@@ -58,13 +58,33 @@ def _create_fallback_plan(topic: str, max_queries: int) -> ResearchPlan:
     )
 
 
+from src.llm import LLMProvider, get_llm_provider, OpenAICompatibleClientAdapter
+
+
 class ResearchPlanner:
     """Agent that plans research scope and generates optimized search queries."""
 
-    def __init__(self, client: Optional[OpenAI] = None):
+    def __init__(
+        self,
+        client: Optional[Any] = None,
+        llm_provider: Optional[LLMProvider] = None,
+        session_id: Optional[str] = None,
+    ):
         self.client = client
+        self._provider = llm_provider
+        self.session_id = session_id
 
-    def _get_client(self) -> OpenAI:
+    def _get_provider(self) -> LLMProvider:
+        if self._provider is not None:
+            return self._provider
+        if self.client is not None:
+            self._provider = OpenAICompatibleClientAdapter(self.client, model=LLM_MODEL)
+            return self._provider
+        self._provider = get_llm_provider(session_id=self.session_id)
+        return self._provider
+
+    def _get_client(self) -> Any:
+        """Retain for legacy test inspections."""
         if self.client is None:
             self.client = OpenAI()
         return self.client
@@ -73,7 +93,7 @@ class ResearchPlanner:
         """
         Generate a structured ResearchPlan.
         For QUICK depth (planning disabled), uses deterministic plan to save LLM budget.
-        For STANDARD/DEEP, uses GPT-4o to decompose topic.
+        For STANDARD/DEEP, uses primary reasoning LLM to decompose topic.
         """
         if config is None:
             config = get_research_config("STANDARD")
@@ -122,18 +142,15 @@ Guidelines:
 """
 
         try:
-            client = self._get_client()
-            response = client.chat.completions.create(
-                model=LLM_MODEL,
+            provider = self._get_provider()
+            data = provider.generate_structured(
                 messages=[
                     {"role": "system", "content": "You are a research planning agent that responds strictly in valid JSON."},
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.2,
-                response_format={"type": "json_object"},
+                operation="research_planning",
             )
-            raw_content = response.choices[0].message.content or "{}"
-            data = json.loads(raw_content)
 
             main_q = data.get("main_question", f"Comprehensive analysis of {clean_topic}")
             sub_qs = data.get("sub_questions", [])

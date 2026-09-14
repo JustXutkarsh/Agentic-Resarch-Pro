@@ -11,19 +11,20 @@ from dataclasses import dataclass
 from typing import List, Dict, Any, Optional
 from openai import OpenAI
 from src.config import ResearchConfig, LLM_MODEL
+from src.research_planner import ResearchPlan
 from src.embedder import embed_text
 from src.hallucination import cosine_similarity
-from src.research_planner import ResearchPlan
+from src.llm import LLMProvider, get_llm_provider, OpenAICompatibleClientAdapter
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class ResearchGap:
-    """Represents a discovered gap in research coverage."""
+    """Represents an identified coverage gap with an actionable query."""
     missing_dimension: str
     reason: str
-    priority: str
+    priority: str  # "High", "Medium", "Low"
     suggested_query: str
     coverage_score: float = 0.0
 
@@ -77,10 +78,26 @@ def compute_dimension_coverage(
 class ResearchGapDetector:
     """Detects missing dimensions and formulates targeted follow-up research queries."""
 
-    def __init__(self, client: Optional[OpenAI] = None):
+    def __init__(
+        self,
+        client: Optional[Any] = None,
+        llm_provider: Optional[LLMProvider] = None,
+        session_id: Optional[str] = None,
+    ):
         self.client = client
+        self._provider = llm_provider
+        self.session_id = session_id
 
-    def _get_client(self) -> OpenAI:
+    def _get_provider(self) -> LLMProvider:
+        if self._provider is not None:
+            return self._provider
+        if self.client is not None:
+            self._provider = OpenAICompatibleClientAdapter(self.client, model=LLM_MODEL)
+            return self._provider
+        self._provider = get_llm_provider(session_id=self.session_id)
+        return self._provider
+
+    def _get_client(self) -> Any:
         if self.client is None:
             self.client = OpenAI()
         return self.client
@@ -180,18 +197,15 @@ Return JSON strictly in this format:
 }}
 """
         try:
-            client = self._get_client()
-            resp = client.chat.completions.create(
-                model=LLM_MODEL,
+            provider = self._get_provider()
+            data = provider.generate_structured(
                 messages=[
                     {"role": "system", "content": "You are a research analyst identifying gaps in collected evidence."},
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.2,
-                response_format={"type": "json_object"},
+                operation="gap_detection",
             )
-            raw = resp.choices[0].message.content or "{}"
-            data = json.loads(raw)
             items = data.get("gaps", [])
 
             results = []

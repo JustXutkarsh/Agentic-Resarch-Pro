@@ -11,7 +11,7 @@ from src.config import (
 
 
 def test_model_constants():
-    assert LLM_MODEL == "gpt-4o"
+    assert LLM_MODEL in ["nvidia/nemotron-3-super-120b-a12b", "gpt-4o"]
     assert EMBEDDING_MODEL == "sentence-transformers/all-MiniLM-L6-v2"
     assert EMBEDDING_DIMENSION == 384
 

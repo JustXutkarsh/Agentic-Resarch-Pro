@@ -18,7 +18,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import List, Dict, Any, Optional, Callable, Set
 
-from src.config import ResearchConfig, get_research_config
+from src.config import ResearchConfig, get_research_config, LLM_MODEL
 from src.research_planner import ResearchPlanner, ResearchPlan
 from src.tavily_client import TavilySearch
 from src.source_evaluator import evaluate_and_filter_sources
@@ -32,6 +32,7 @@ from src.claim_verifier import ClaimVerifier, ClaimVerification
 from src.contradiction_detector import ContradictionDetector, Contradiction
 from src.confidence import calculate_research_confidence, ResearchConfidence
 from src.research_metrics import ResearchMetrics
+from src.llm import get_llm_provider, LLMProvider, OpenAICompatibleClientAdapter
 
 logging.basicConfig(
     level=logging.INFO,
@@ -151,25 +152,36 @@ class ResearchOrchestrator:
         summarizer: Optional[Summarizer] = None,
         claim_verifier: Optional[ClaimVerifier] = None,
         contradiction_detector: Optional[ContradictionDetector] = None,
+        llm_provider: Optional[LLMProvider] = None,
     ):
-        self.planner = planner or ResearchPlanner()
+        self.llm_provider = llm_provider
+        self.planner = planner or ResearchPlanner(llm_provider=llm_provider)
         self.searcher = searcher or TavilySearch()
-        self.gap_detector = gap_detector or ResearchGapDetector()
-        self.summarizer = summarizer or Summarizer()
-        self.claim_verifier = claim_verifier or ClaimVerifier()
-        self.contradiction_detector = contradiction_detector or ContradictionDetector()
+        self.gap_detector = gap_detector or ResearchGapDetector(llm_provider=llm_provider)
+        self.summarizer = summarizer or Summarizer(llm_provider=llm_provider)
+        self.claim_verifier = claim_verifier or ClaimVerifier(llm_provider=llm_provider)
+        self.contradiction_detector = contradiction_detector or ContradictionDetector(llm_provider=llm_provider)
 
     def run_research(
         self,
         topic: str,
         depth: str = "STANDARD",
         progress_callback: Optional[Callable[[str, float, str], None]] = None,
+        session_id: Optional[str] = None,
     ) -> ResearchResult:
         """
         Execute full semi-autonomous research workflow with progress reporting.
         """
-        session_id = f"research_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:6]}"
+        session_id = session_id or f"research_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:6]}"
         config = get_research_config(depth)
+
+        # Bind session-scoped LLM provider to ensure shared fallback state
+        session_provider = self.llm_provider or get_llm_provider(session_id=session_id)
+        for submod in [self.planner, self.gap_detector, self.summarizer, self.claim_verifier, self.contradiction_detector]:
+            if hasattr(submod, "_provider") and (submod._provider is None or not isinstance(submod._provider, OpenAICompatibleClientAdapter)):
+                submod._provider = session_provider
+            if hasattr(submod, "session_id"):
+                submod.session_id = session_id
 
         metrics = ResearchMetrics(session_id=session_id, topic=topic, depth=config.name)
         state = ResearchState(
@@ -328,7 +340,7 @@ class ResearchOrchestrator:
         # -------------------------------------------------------------
         # Phase C: Report Synthesis (Writer Agent)
         # -------------------------------------------------------------
-        report_step("SYNTHESIZER", 0.70, "Synthesizing structured research report with GPT-4o...")
+        report_step("SYNTHESIZER", 0.70, "Synthesizing structured research report with reasoning LLM...")
         evidence_for_summary = [r["text"] for r in state.retrieved_chunks]
         report = self.summarizer.summarize(
             topic=topic,
@@ -399,8 +411,12 @@ class ResearchOrchestrator:
         state.confidence = confidence
         report_step("CONFIDENCE", 0.96, f"Confidence calculated: {int(confidence.overall_score)}/100.")
 
-        # Finalize metrics
+        # Finalize metrics and provider reporting
         metrics.finalize()
+        provider_used = getattr(session_provider, "last_provider_used", getattr(session_provider, "provider_name", "Unknown"))
+        metrics.llm_provider = provider_used
+        metrics.llm_model = getattr(session_provider, "model_name", LLM_MODEL)
+        logger.info(f"[{session_id}] [LLM] Research session complete. LLM Provider used: {provider_used} (Model: {metrics.llm_model})")
         report_step("COMPLETE", 1.0, f"Research session completed successfully in {metrics.execution_time_seconds}s.")
 
         return ResearchResult(state=state)
@@ -410,7 +426,9 @@ def run_research(
     topic: str,
     depth: str = "STANDARD",
     progress_callback: Optional[Callable[[str, float, str], None]] = None,
+    session_id: Optional[str] = None,
+    orchestrator: Optional[ResearchOrchestrator] = None,
 ) -> ResearchResult:
     """Convenience functional wrapper for executing research."""
-    orchestrator = ResearchOrchestrator()
-    return orchestrator.run_research(topic, depth=depth, progress_callback=progress_callback)
+    orch = orchestrator or ResearchOrchestrator()
+    return orch.run_research(topic, depth=depth, progress_callback=progress_callback, session_id=session_id)

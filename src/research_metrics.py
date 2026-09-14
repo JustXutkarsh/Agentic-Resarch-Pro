@@ -42,6 +42,7 @@ class ResearchMetrics:
 
     # Reproducibility metadata
     llm_model: str = LLM_MODEL
+    llm_provider: str = ""
     embedding_model: str = EMBEDDING_MODEL
     app_version: str = APP_VERSION
 
@@ -80,6 +81,7 @@ class ResearchMetrics:
             "contradictions_detected": self.contradictions_detected,
             "llm_calls_made": self.llm_calls_made,
             "llm_model": self.llm_model,
+            "llm_provider": self.llm_provider,
             "embedding_model": self.embedding_model,
             "app_version": self.app_version,
         }

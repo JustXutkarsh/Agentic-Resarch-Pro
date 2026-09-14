@@ -10,6 +10,7 @@ from typing import List, Dict, Any, Optional
 from openai import OpenAI
 from src.config import LLM_MODEL
 from src.research_planner import ResearchPlan
+from src.llm import LLMProvider, get_llm_provider, OpenAICompatibleClientAdapter
 
 logger = logging.getLogger(__name__)
 
@@ -17,10 +18,26 @@ logger = logging.getLogger(__name__)
 class Summarizer:
     """Synthesizes structured research reports from evidence and plan."""
 
-    def __init__(self, client: Optional[OpenAI] = None):
+    def __init__(
+        self,
+        client: Optional[Any] = None,
+        llm_provider: Optional[LLMProvider] = None,
+        session_id: Optional[str] = None,
+    ):
         self.client = client
+        self._provider = llm_provider
+        self.session_id = session_id
 
-    def _get_client(self) -> OpenAI:
+    def _get_provider(self) -> LLMProvider:
+        if self._provider is not None:
+            return self._provider
+        if self.client is not None:
+            self._provider = OpenAICompatibleClientAdapter(self.client, model=LLM_MODEL)
+            return self._provider
+        self._provider = get_llm_provider(session_id=self.session_id)
+        return self._provider
+
+    def _get_client(self) -> Any:
         if self.client is None:
             self.client = OpenAI()
         return self.client
@@ -237,9 +254,8 @@ INSTRUCTIONS:
 """
 
         try:
-            client = self._get_client()
-            resp = client.chat.completions.create(
-                model=LLM_MODEL,
+            provider = self._get_provider()
+            resp = provider.generate(
                 messages=[
                     {
                         "role": "system",
@@ -249,8 +265,9 @@ INSTRUCTIONS:
                 ],
                 temperature=temperature,
                 max_tokens=max_tokens,
+                operation="report_synthesis",
             )
-            report = resp.choices[0].message.content or ""
+            report = resp.content or ""
             return report.strip()
 
         except Exception as e:

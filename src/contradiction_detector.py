@@ -15,6 +15,8 @@ from src.research_planner import ResearchPlan
 from src.embedder import embed_text
 from src.hallucination import cosine_similarity
 
+from src.llm import LLMProvider, get_llm_provider, OpenAICompatibleClientAdapter
+
 logger = logging.getLogger(__name__)
 
 
@@ -41,28 +43,33 @@ class Contradiction:
 
 def _group_chunks_by_dimension(
     dimensions: List[str],
-    evidence_chunks: List[Dict[str, Any]],
+    chunks: List[Dict[str, Any]],
     similarity_threshold: float = 0.30,
 ) -> Dict[str, List[Dict[str, Any]]]:
-    """
-    Cluster evidence chunks into research dimensions based on semantic similarity.
-    """
+    """Group evidence chunks into dimension clusters using embeddings."""
     grouped: Dict[str, List[Dict[str, Any]]] = {dim: [] for dim in dimensions}
-    if not dimensions or not evidence_chunks:
-        return grouped
 
-    dim_vectors = {dim: embed_text(dim) for dim in dimensions}
+    dim_embeddings = {dim: embed_text(dim) for dim in dimensions}
 
-    for chunk_dict in evidence_chunks:
+    for chunk_dict in chunks:
         text = chunk_dict.get("text", "")
         if not text:
             continue
-        chunk_vec = embed_text(text[:300])
 
-        for dim, dim_vec in dim_vectors.items():
-            sim = cosine_similarity(dim_vec, chunk_vec)
-            if sim >= similarity_threshold:
-                grouped[dim].append(chunk_dict)
+        chunk_emb = embed_text(text)
+
+        # Assign to best matching dimension above threshold
+        best_dim = None
+        best_sim = -1.0
+
+        for dim, dim_emb in dim_embeddings.items():
+            sim = cosine_similarity(dim_emb, chunk_emb)
+            if sim > best_sim:
+                best_sim = sim
+                best_dim = dim
+
+        if best_dim and best_sim >= similarity_threshold:
+            grouped[best_dim].append(chunk_dict)
 
     return grouped
 
@@ -70,10 +77,26 @@ def _group_chunks_by_dimension(
 class ContradictionDetector:
     """Identifies nuanced disagreements and opposing evidence across research dimensions."""
 
-    def __init__(self, client: Optional[OpenAI] = None):
+    def __init__(
+        self,
+        client: Optional[Any] = None,
+        llm_provider: Optional[LLMProvider] = None,
+        session_id: Optional[str] = None,
+    ):
         self.client = client
+        self._provider = llm_provider
+        self.session_id = session_id
 
-    def _get_client(self) -> OpenAI:
+    def _get_provider(self) -> LLMProvider:
+        if self._provider is not None:
+            return self._provider
+        if self.client is not None:
+            self._provider = OpenAICompatibleClientAdapter(self.client, model=LLM_MODEL)
+            return self._provider
+        self._provider = get_llm_provider(session_id=self.session_id)
+        return self._provider
+
+    def _get_client(self) -> Any:
         if self.client is None:
             self.client = OpenAI()
         return self.client
@@ -153,18 +176,16 @@ INSTRUCTIONS:
 """
 
         try:
-            client = self._get_client()
-            resp = client.chat.completions.create(
-                model=LLM_MODEL,
+            provider = self._get_provider()
+            data_dict = provider.generate_structured(
                 messages=[
                     {"role": "system", "content": "You are an objective academic research reviewer."},
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.1,
-                response_format={"type": "json_object"},
+                operation="contradiction_detection",
             )
-            raw = resp.choices[0].message.content or "{}"
-            data = json.loads(raw).get("contradictions", [])
+            data = data_dict.get("contradictions", [])
 
             results = []
             for item in data[:max_contradiction_pairs]:

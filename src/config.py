@@ -4,11 +4,16 @@ Defines parameters for QUICK, STANDARD, and DEEP research depth modes,
 along with model constants and resource/cost budget limits.
 """
 
+import os
 from dataclasses import dataclass
 from typing import Dict
 
+LLM_PROVIDER = os.getenv("LLM_PROVIDER", "nvidia").strip().lower()
+NVIDIA_BASE_URL = os.getenv("NVIDIA_BASE_URL", "https://integrate.api.nvidia.com/v1")
+NVIDIA_MODEL = os.getenv("NVIDIA_MODEL", "nvidia/nemotron-3-super-120b-a12b")
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o")
 
-LLM_MODEL = "gpt-4o"
+LLM_MODEL = NVIDIA_MODEL if LLM_PROVIDER == "nvidia" else OPENAI_MODEL
 EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 EMBEDDING_DIMENSION = 384
 
