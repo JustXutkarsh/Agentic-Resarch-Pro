@@ -1,12 +1,12 @@
 """
 Live Research Activity & Stage Monitor for Agentic Research.
-Apple Liquid Glass + Tactile Claymorphism live research command center.
-Strict Light Contrast System:
-- Primary text: #1C1C1E
-- Secondary text: #4A4A4F
-- Muted text: #6E6E73
-- Active accent: #0066FF / #E85D4A
-All HTML strings are left-aligned at column 0 to prevent Markdown 4-space code block bugs.
+Editorial Research Instrument Design:
+- Real local wall-clock event timestamps (HH:MM:SS AM/PM)
+- Real wall-clock elapsed duration (MM:SS elapsed)
+- 7-Stage Progressive Research Journey:
+  UNDERSTAND ─ EXPLORE ─ SEARCH ─ EVIDENCE ─ DEBATE ─ VERIFY ─ DOSSIER
+- Vertical Research Trail with active blinking cursor ▌ on current event only
+- Compact live metrics (Sources, Perspectives, Evidence, Iterations)
 """
 
 import html
@@ -25,109 +25,103 @@ STAGES = [
 
 def humanize_backend_message(step_name: str, raw_msg: str) -> str:
     """
-    Translates raw backend engineering events into human-readable research actions
-    while preserving genuine real pipeline counts and details.
+    Translates raw backend engineering events into human-readable research actions.
+    Eliminates internal library names, API calls, raw telemetry, and developer noise.
     """
     msg = raw_msg or ""
     step = step_name.upper()
 
     # Step 1: Initialization
     if "INIT" in step:
-        return "Understanding question..."
+        return "Understanding the research question & scope"
 
     # Step 2: Research Planner
     if "PLAN" in step:
         if "generated" in msg.lower():
-            return msg.replace("targeted search queries", "investigative queries across research angles")
-        return "Exploring research angles..."
+            return "Formulated investigative queries across research dimensions"
+        return "Exploring relevant research angles & hypotheses"
 
     # Step 3: Multi-query Search
     if "SEARCH" in step:
-        if "searching" in msg.lower():
-            return "Searching authoritative sources..."
         if "found" in msg.lower():
-            return msg.replace("Tavily", "authoritative search index").replace("duplicates", "duplicate sources consolidated")
-        return "Searching authoritative sources..."
+            return "Retrieved candidate literature & deduplicated source references"
+        return "Searching authoritative sources across dimensions"
 
     # Step 4: Source Evaluation
-    if "EVAL" in step:
-        if "evaluating" in msg.lower():
-            return "Evaluating evidence..."
+    if step.startswith("EVAL") or "EVALUAT" in step:
         if "accepted" in msg.lower():
-            return msg.replace("Rejected:", "Filtered lower-credibility:")
-        return "Evaluating evidence..."
+            return "Completed source authority & credibility scoring"
+        return "Evaluating source relevance and institutional authority"
+
 
     # Step 5: Content Scraping & Extraction
     if "SCRAP" in step:
-        if "scraping" in msg.lower():
-            return "Scraping content & primary citations from verified sources..."
         if "parsed" in msg.lower():
-            return msg.replace("Successfully parsed", "Extracted primary evidence from")
-        return "Scraping content & primary citations..."
+            return "Extracted primary evidence passages and citations"
+        return "Scraping verified content & literature passages"
 
     # Step 6: Vector Embeddings
     if "EMBED" in step:
-        return "Generating dense semantic vector embeddings..."
+        return "Generating dense semantic representations for evidence passages"
 
     # Step 7: Evidence Retrieval
     if "RETR" in step:
-        return "Retrieving evidence passages from isolated vector collection..."
+        return "Retrieving evidence passages from session vector collection"
 
     # Step 8: Research Gap Detection
     if "GAP" in step:
         if "discovered" in msg.lower():
-            return "Research gap detected..."
+            return "Evidence gap detected; scheduling autonomous follow-up queries"
         if "sufficient" in msg.lower():
-            return "Sufficient dimension coverage verified across angles."
-        return "Analyzing dimension coverage to detect research gaps..."
+            return "Sufficient dimension coverage verified across all angles"
+        return "Analyzing dimension coverage to detect research gaps"
 
     # Iteration follow-up
     if "ITERATION" in step:
-        return "Expanding follow-up search..."
+        parts = step.split("_")
+        num = parts[1] if len(parts) > 1 else "2"
+        return f"Expanding follow-up investigation (Iteration {num})"
 
     # Step 9: Contradiction Detection
     if "CONTRA" in step:
         if "identified" in msg.lower():
-            return "Conflicting evidence identified..."
-        return "Clustering vector evidence to detect divergent viewpoints..."
+            return "Reconciled conflicting viewpoints and empirical trade-offs"
+        return "Comparing conflicting evidence across opposing perspectives"
 
     # Step 10: Claim Verification
     if "CLAIM" in step:
         if "extracting" in msg.lower():
-            return "Extracting atomic factual claims for evidentiary verification..."
-        if "judging" in msg.lower():
-            return "Verifying claims..."
-        if "verified" in msg.lower():
-            return msg.replace("Verified", "Grounded").replace("claims", "factual claims against primary vector passages")
-        return "Verifying claims..."
+            return "Extracting atomic factual assertions from synthesized evidence"
+        if "verified" in msg.lower() or "judging" in msg.lower():
+            return "Grounded factual claims against verified primary citations"
+        return "Verifying empirical claims against retrieved passages"
 
     # Step 11: Dossier Synthesis
     if "SYNTH" in step:
         if "completed" in msg.lower():
-            return "Synthesizing dossier completed."
-        return "Synthesizing dossier..."
+            return "Synthesizing research findings into structured dossier"
+        return "Synthesizing comprehensive research dossier"
 
     # Step 12: Research Confidence & Completion
     if "CONF" in step:
-        if "calculated" in msg.lower():
-            return msg.replace("Confidence calculated:", "Evidence confidence score:")
-        return "Computing research confidence heuristic across evidence components..."
+        return "Computing research confidence heuristic across evidence components"
 
     if "COMPLETE" in step:
-        return "Research complete: Final dossier verified."
+        return "Research complete: Final dossier verified"
 
     # Clean out internal library mentions if any remain
-    return (
+    cleaned = (
         msg.replace("Tavily", "Research Index")
         .replace("ChromaDB", "Vector Store")
         .replace("all-MiniLM-L6-v2", "Semantic Embedder")
         .replace("GPT-4o", "Synthesizer")
     )
+    return cleaned
 
 
 def render_7_stage_journey(current_stage: str) -> str:
     """
-    Renders the 7-stage research journey timeline with clear active focus and high contrast.
+    Renders the 7-stage research journey timeline.
     UNDERSTAND ─ EXPLORE ─ SEARCH ─ EVIDENCE ─ DEBATE ─ VERIFY ─ DOSSIER
     """
     stage_upper = current_stage.upper()
@@ -142,7 +136,7 @@ def render_7_stage_journey(current_stage: str) -> str:
     elif "SCRAP" in stage_upper or "EMBED" in stage_upper or "RETR" in stage_upper:
         active_idx = 3  # EVIDENCE
     elif "GAP" in stage_upper or "CONTRA" in stage_upper or "ITERATION" in stage_upper:
-        active_idx = 4  # DEBATE (Gap detection, follow-up search, contradiction detection)
+        active_idx = 4  # DEBATE
     elif "CLAIM" in stage_upper:
         active_idx = 5  # VERIFY
     elif "SYNTH" in stage_upper or "CONF" in stage_upper or "COMPLETE" in stage_upper:
@@ -162,8 +156,7 @@ def render_7_stage_journey(current_stage: str) -> str:
 
         steps_html.append(f"""<div class="stage-node-box {status_cls}">
 <div class="stage-node-circle">{dot_content}</div>
-<div class="stage-node-num">{short_code}</div>
-<div class="stage-node-name">{label}</div>
+<div class="stage-node-name">{short_code}</div>
 </div>""")
 
     joined_steps = "".join(steps_html)
@@ -174,81 +167,119 @@ def render_7_stage_journey(current_stage: str) -> str:
 </div>"""
 
 
-def render_live_activity_terminal(event_logs: List[Dict[str, Any]], current_message: str = "", elapsed_seconds: float = 0.0) -> str:
-    """
-    Renders live real-time research activity lines in warm white liquid glass.
-    The header tracks the ongoing elapsed wall-clock time (MM:SS),
-    while completed lines settle into place with their exact relative event timestamp (+MM:SS).
-    Active line has blinking cursor ▌.
-    """
-    lines_html = []
-    # Show last 8 events for comfortable reading without layout jumping
-    for log in event_logs[-8:]:
-        t = log.get("time", "+00:00")
-        msg = html.escape(log.get("friendly_message") or log.get("message", ""))
-        lines_html.append(f"""<div class="activity-line">
-<span class="activity-time">{t}</span>
-<span style="color:#6E6E73; font-weight:700;">●</span>
-<span>{msg}</span>
-</div>""")
-
-    elapsed_int = int(elapsed_seconds)
-    elapsed_str = f"{elapsed_int//60:02d}:{elapsed_int%60:02d}"
-
-    active_line_html = ""
-    if current_message:
-        clean_curr = html.escape(current_message)
-        active_line_html = f"""<div class="activity-line active-line" style="margin-top:6px;">
-<span class="activity-time" style="color:#0066FF; font-weight:700;">+{elapsed_str}</span>
-<span style="color:#0066FF; font-weight:800;">●</span>
-<span>{clean_curr}</span>
-<span class="activity-cursor">▌</span>
-</div>"""
-    else:
-        active_line_html = f"""<div class="activity-line" style="margin-top:6px; color:#6E6E73;">
-<span class="activity-time">+{elapsed_str}</span>
-<span style="color:#6E6E73;">●</span>
-<span>Executing autonomous research pipeline</span>
-<span class="activity-cursor">▌</span>
-</div>"""
-
-    joined_lines = "".join(lines_html)
-
-    return f"""<div class="live-activity-card">
-<div class="live-activity-header">
-<div class="activity-status-tag">
-<div class="activity-live-pulse"></div>
-<span>Autonomous Pipeline Activity</span>
+def render_compact_metrics(sources: int = 0, perspectives: int = 3, evidence_count: int = 0, iterations: int = 1) -> str:
+    """Renders 4 compact live research metrics."""
+    return f"""<div class="metrics-strip">
+<div class="metric-cell">
+<div class="metric-value">{sources:02d}</div>
+<div class="metric-label">Sources Discovered</div>
 </div>
-<div style="font-size:12.5px; font-weight:750; color:#1C1C1E; font-family:'JetBrains Mono', monospace; background:rgba(0,0,0,0.04); padding:3px 10px; border-radius:8px;">
-⏱️ Elapsed: <span style="color:#0066FF;">{elapsed_str}</span>
+<div class="metric-cell">
+<div class="metric-value">{perspectives:02d}</div>
+<div class="metric-label">Research Angles</div>
 </div>
+<div class="metric-cell">
+<div class="metric-value">{evidence_count:02d}</div>
+<div class="metric-label">Evidence Passages</div>
 </div>
-<div>
-{joined_lines}
-{active_line_html}
+<div class="metric-cell">
+<div class="metric-value">{iterations:02d}</div>
+<div class="metric-label">Iterations</div>
 </div>
 </div>"""
-
 
 
 def render_4_live_stats(sources: int = 0, perspectives: int = 3, evidence_count: int = 0, iterations: int = 1) -> str:
-    """Renders 4 floating research metric cards with clean typography."""
-    return f"""<div class="metrics-row">
-<div class="metric-glass-box">
-<div class="metric-glass-number">{sources:02d}</div>
-<div class="metric-glass-label">Sources Discovered</div>
+    """Backward compatibility wrapper."""
+    return render_compact_metrics(sources, perspectives, evidence_count, iterations)
+
+
+def render_vertical_research_trail(
+    event_logs: List[Dict[str, Any]],
+    active_message: str = "",
+    active_clock_time: str = "",
+    elapsed_str: str = "00:00 elapsed",
+    is_complete: bool = False,
+) -> str:
+    """
+    Renders the refined vertical research trail.
+    Each event shows real local system clock time (HH:MM:SS AM/PM) and research action.
+    The active event features the blinking typewriter cursor ▌.
+    When an event completes, the cursor is removed.
+    """
+    trail_items_html = []
+    
+    # Render historical completed events
+    for idx, log in enumerate(event_logs):
+        clock_t = html.escape(log.get("clock_time") or "00:00:00 AM")
+        msg = html.escape(log.get("friendly_message") or log.get("message", ""))
+        
+        trail_items_html.append(f"""<div class="trail-node">
+<div class="trail-time">{clock_t}</div>
+<div class="trail-bullet-col">
+<div class="trail-bullet"></div>
+<div class="trail-line"></div>
 </div>
-<div class="metric-glass-box">
-<div class="metric-glass-number">{perspectives:02d}</div>
-<div class="metric-glass-label">Research Angles</div>
+<div class="trail-content">{msg}</div>
+</div>""")
+
+    # Render active in-flight event if not complete
+    if not is_complete and active_message:
+        act_clock = html.escape(active_clock_time or "00:00:00 AM")
+        act_msg = html.escape(active_message)
+        
+        trail_items_html.append(f"""<div class="trail-node">
+<div class="trail-time" style="color:#315BFF; font-weight:600;">{act_clock}</div>
+<div class="trail-bullet-col">
+<div class="trail-bullet active"></div>
 </div>
-<div class="metric-glass-box">
-<div class="metric-glass-number">{evidence_count:02d}</div>
-<div class="metric-glass-label">Evidence Passages</div>
+<div class="trail-content active">
+{act_msg}<span class="trail-cursor">▌</span>
 </div>
-<div class="metric-glass-box">
-<div class="metric-glass-number">{iterations:02d}</div>
-<div class="metric-glass-label">Research Iterations</div>
+</div>""")
+    elif is_complete and active_message:
+        # Final complete step without cursor
+        act_clock = html.escape(active_clock_time or "00:00:00 AM")
+        act_msg = html.escape(active_message)
+        
+        trail_items_html.append(f"""<div class="trail-node">
+<div class="trail-time" style="color:#138A63; font-weight:600;">{act_clock}</div>
+<div class="trail-bullet-col">
+<div class="trail-bullet" style="background:#138A63;"></div>
+</div>
+<div class="trail-content" style="color:#151619; font-weight:700;">
+{act_msg}
+</div>
+</div>""")
+
+    joined_trail = "".join(trail_items_html)
+
+    return f"""<div class="trail-card">
+<div class="trail-header">
+<div class="trail-title">
+<span style="color:#315BFF;">✦</span> Autonomous Investigation Trail
+</div>
+<div class="trail-elapsed">
+⏱️ {html.escape(elapsed_str)}
+</div>
+</div>
+
+<div>
+{joined_trail}
 </div>
 </div>"""
+
+
+def render_live_activity_terminal(
+    event_logs: List[Dict[str, Any]],
+    current_message: str = "",
+    elapsed_seconds: float = 0.0,
+) -> str:
+    """Backward compatibility wrapper."""
+    elapsed_int = int(elapsed_seconds)
+    elapsed_str = f"{elapsed_int//60:02d}:{elapsed_int%60:02d} elapsed"
+    return render_vertical_research_trail(
+        event_logs=event_logs,
+        active_message=current_message,
+        elapsed_str=elapsed_str,
+    )
