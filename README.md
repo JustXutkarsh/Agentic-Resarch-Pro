@@ -1,274 +1,431 @@
 # 🤝 Agentic Research PRO (v2.0)
 
-> **Autonomous Multi-Agent Deep Research & Evidence Verification Pipeline powered by Local Hugging Face Embeddings, ChromaDB Vector Retrieval, GPT-4o Reasoning, and Publication-Ready PDF Dossier Export.**
+> **Autonomous Multi-Agent Deep Research & Epistemic Verification Instrument powered by NVIDIA NIM (Nemotron 120B), OpenAI Fallback, Local Hugging Face Embeddings, ChromaDB Vector Retrieval, FastAPI SSE Streaming, and an Editorial React Presentation Engine.**
 
 [![Python Version](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
-[![Framework](https://img.shields.io/badge/Frontend-Streamlit-FF4B4B.svg)](https://streamlit.io/)
-[![LLM Reasoning](https://img.shields.io/badge/Reasoning%20LLM-GPT--4o-412991.svg)](https://openai.com/)
-[![Local Embeddings](https://img.shields.io/badge/Embeddings-sentence--transformers%2Fall--MiniLM--L6--v2-brightgreen.svg)](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2)
-[![Vector DB](https://img.shields.io/badge/VectorDB-ChromaDB%20Ephemeral-purple.svg)](https://www.trychroma.com/)
-[![Search](https://img.shields.io/badge/Search-Tavily%20Multi--Query-teal.svg)](https://tavily.com/)
-[![Tests](https://img.shields.io/badge/Tests-54%20Passed%20(100%25)-success.svg)](tests/)
+[![FastAPI](https://img.shields.io/badge/Backend-FastAPI%20%2B%20SSE-009688.svg)](https://fastapi.tiangolo.com/)
+[![Frontend](https://img.shields.io/badge/Frontend-React%2019%20%2B%20Vite%20%2B%20Tailwind-61DAFB.svg)](frontend/)
+[![Primary LLM](https://img.shields.io/badge/Primary%20LLM-NVIDIA%20Nemotron--3--120B-76B900.svg)](https://build.nvidia.com/)
+[![Fallback LLM](https://img.shields.io/badge/Fallback%20LLM-OpenAI%20GPT--4o-412991.svg)](https://openai.com/)
+[![Local Embeddings](https://img.shields.io/badge/Embeddings-all--MiniLM--L6--v2%20(Local)-brightgreen.svg)](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2)
+[![Vector Store](https://img.shields.io/badge/VectorDB-ChromaDB%20(Session--Isolated)-purple.svg)](https://www.trychroma.com/)
+[![Search Engine](https://img.shields.io/badge/Search-Tavily%20Multi--Query-teal.svg)](https://tavily.com/)
+[![Test Suite](https://img.shields.io/badge/Tests-67%20Passed%20(100%25)-success.svg)](tests/)
+[![Attribution](https://img.shields.io/badge/Built%20by-Utkarsh%20Pandey-black.svg)](#-author--attribution)
 
 ---
 
 ## 📖 Table of Contents
 
-- [The Problem with Traditional Research](#-the-problem-with-traditional-research)
-- [The Agentic Research PRO Solution](#-the-agentic-research-pro-solution)
+- [Overview & Value Proposition](#-overview--value-proposition)
 - [Key Architectural Innovations](#-key-architectural-innovations)
-- [System Architecture Flow](#-system-architecture-flow)
+- [System Architecture Topology](#-system-architecture-topology)
 - [Technology Stack: Separation of Concerns](#-technology-stack-separation-of-concerns)
-- [Research Depth Comparison (Quick vs Standard vs Deep)](#-research-depth-comparison)
-- [Benchmark: Traditional Search vs Agentic Research PRO](#-benchmark-traditional-search-vs-agentic-research-pro)
-- [Component & Module Breakdown](#-component--module-breakdown)
+- [Research Depth Modes (Quick vs Standard vs Deep)](#-research-depth-modes)
+- [Empirical Benchmark: Traditional Search vs Agentic Research PRO](#-empirical-benchmark)
+- [Production API Reference](#-production-api-reference)
 - [Directory Structure](#-directory-structure)
 - [Installation & Quick Start](#-installation--quick-start)
 - [Testing & Quality Assurance](#-testing--quality-assurance)
-- [Academic Disclaimer](#-academic-disclaimer)
+- [Academic & Methodological Disclaimer](#-academic--methodological-disclaimer)
+- [Author & Attribution](#-author--attribution)
 - [License](#-license)
 
 ---
 
-## 🛑 The Problem with Traditional Research
+## 💡 Overview & Value Proposition
 
-Traditional automated research workflows suffer from fundamental weaknesses:
-1. **Single-Query Blindspots**: Searching only the exact user prompt misses critical adjacent sub-topics, regulatory frameworks, and market trade-offs.
-2. **Unchecked Hallucinations**: Standard RAG pipelines generate text without verifying if individual factual assertions are supported by underlying evidence.
-3. **No Coverage Awareness**: LLMs synthesize summaries without knowing which dimensions of a topic were missed due to search blindspots.
-4. **Source Quality Agnosticism**: Search engines return blogs, promotional content, and academic papers with equal weight.
-5. **Opaque Confidence**: Users are presented with authoritative-sounding text without any explanation of empirical grounding or data consensus.
+Traditional AI search workflows and linear Retrieval-Augmented Generation (RAG) pipelines suffer from critical epistemic flaws:
+1. **Single-Query Shallow Sampling**: Searching only the exact user prompt overlooks orthogonal sub-topics, trade-offs, and critical counter-evidence.
+2. **Unchecked Hallucinations & Cherry-Picking**: Standard LLMs generate authoritative-sounding text without testing whether individual factual assertions are grounded in retrieved evidence.
+3. **Absence of Blindspot Awareness**: Systems synthesize outputs without measuring how much of the intended topical surface area was missed due to search gaps.
+4. **Echo-Chamber Synthesis**: Conflicting empirical claims, academic disputes, and opposing technical methodologies are flattened into a single, misleading consensus.
+5. **Opaque Grounding**: Readers receive text without transparent citation linkage or explainable confidence metrics.
 
----
-
-## 💡 The Agentic Research PRO Solution
-
-**Agentic Research PRO** is an end-to-end semi-autonomous multi-agent system designed to overcome these limitations. Instead of a linear prompt wrapper, it orchestrates a team of specialized sub-agents:
-
-* **Decomposes** broad topics into multidimensional research questions and targeted queries.
-* **Searches & Normalizes** sources across multiple queries with URL deduplication and query caching.
-* **Evaluates** source priority using a 5-factor heuristic (Authority 30%, Relevance 25%, Recency 20%, Evidence Quality 15%, Reputation 10%).
-* **Indexes & Retrieves** evidence using **local Hugging Face embeddings** (`all-MiniLM-L6-v2`) in isolated ChromaDB session collections (**zero OpenAI embedding API cost**).
-* **Detects Gaps** deterministically by measuring semantic coverage across dimensions and formulating iterative follow-up queries.
-* **Grounds Claims** through GPT-4o factual verification against retrieved evidence passages (classifying claims into 5 rigorous support tiers).
-* **Analyzes Contradictions** between research dimensions to highlight competing viewpoints.
-* **Calculates an Explainable Confidence Heuristic** and compiles everything into a publication-ready PDF dossier.
+**Agentic Research PRO** is an enterprise-grade autonomous research platform. It decomposes questions into multi-perspective hypotheses, deploys parallel web crawlers, indexes evidence into a dense vector space with local Hugging Face embeddings, autonomously audits for coverage gaps, clusters adversarial dialectic contradictions, grounds factual assertions via Natural Language Inference (NLI), and compiles publication-grade dossiers with post-render page validation.
 
 ---
 
 ## 🧠 Key Architectural Innovations
 
-### 1. Zero OpenAI Embedding Overhead
-All document chunking, indexing, semantic similarity, and retrieval operations use local `sentence-transformers/all-MiniLM-L6-v2`. OpenAI is called **strictly for high-level language intelligence and reasoning** (planning, claim extraction, evidence interpretation, report synthesis).
+### 1. Dual-Provider LLM Router with Resilient Automatic Fallback
+The system uses **NVIDIA NIM** (`nvidia/nemotron-3-super-120b-a12b`) as its high-performance primary reasoning engine via an OpenAI-compatible interface. If NVIDIA encounters network timeouts, rate limits (HTTP 429), or service degradation, the pipeline automatically switches the affected operation to **OpenAI** (`gpt-4o`) seamlessly without breaking the research session.
 
-### 2. Evidence Grounding (Not Cosine Similarity Alone)
-Claims are **never verified by cosine similarity alone**. Cosine similarity is used strictly to identify candidate evidence passages (top 3–5 chunks). GPT-4o then performs objective evidentiary judgment to categorize each claim:
-* `Strongly Supported` (1.0)
-* `Supported` (0.85)
-* `Partially Supported` (0.60)
-* `Weakly Supported` (0.35)
-* `Unsupported` (0.10)
+### 2. Zero-Cost Local Hugging Face Embeddings
+All semantic indexing, sliding-window chunking (1,200 chars, 100 overlap), and cosine distance queries are executed locally via `sentence-transformers/all-MiniLM-L6-v2`. LLM inference is strictly reserved for high-order reasoning (planning, synthesis, dialectic debate, and claim extraction), saving substantial token costs.
 
-### 3. Iterative Research with Deterministic Gap Detection
-Before calling LLMs for gap analysis, the system computes the mathematical semantic similarity between evidence chunks and planned research dimensions. If coverage falls below threshold, focused follow-up queries are generated for subsequent search iterations, strictly capped by `max_iterations`.
+### 3. Iterative Heuristic Gap Detection & Reflex Loop
+The system mathematically evaluates evidence coverage across all planned research dimensions before generating synthesis reports. If dimensional semantic coverage falls below the defensible threshold ($\le 0.45$), it autonomously triggers a follow-up reflex query cycle to retrieve missing perspectives.
 
-### 4. Explainable Research Confidence Engine
-The system synthesizes an explainable score ($0 - 100$):
-$$\text{Confidence} = 25\%\text{ Source Quality} + 20\%\text{ Evidence Coverage} + 25\%\text{ Claim Support} + 15\%\text{ Source Agreement} + 15\%\text{ Research Completeness}$$
-A transparent plain-English diagnostic summary is generated algorithmically without an additional LLM call.
+### 4. Objective Evidence Grounding (Beyond Cosine Similarity)
+Claims are never accepted solely on vector similarity. The top candidate evidence passages are subjected to rigorous Natural Language Inference classification into 5 distinct support tiers:
+* **Strongly Supported** ($1.00$)
+* **Supported** ($0.85$)
+* **Partially Supported** ($0.60$)
+* **Weakly Supported** ($0.35$)
+* **Unsupported** ($0.10$)
+
+### 5. Adversarial Dialectic Contradiction Engine
+In **Deep Mode**, the system actively clusters competing empirical evidence across dimensions to uncover technological debates, cost disputes, and opposing expert conclusions rather than suppressing them.
+
+### 6. Explainable Research Confidence Engine
+A transparent composite confidence score ($0 - 100$) is computed mathematically without hallucination:
+$$\text{Confidence} = 25\%\,Q_{\text{source}} + 20\%\,C_{\text{evidence}} + 25\%\,S_{\text{claims}} + 15\%\,A_{\text{agreement}} + 15\%\,K_{\text{completeness}}$$
 
 ---
 
-## 🗺️ System Architecture Flow
+## 🗺️ System Architecture Topology
 
 ```mermaid
 flowchart TD
-    User([User Topic & Depth Selection]) --> UI[Streamlit UI app.py]
-    UI --> Orchestrator[ResearchOrchestrator src/research_orchestrator.py]
+    User([User Ingestion: Topic & Depth]) --> WebApp[React 19 Editorial Frontend]
+    WebApp -->|POST /api/research/start| API[FastAPI Server server.py]
+    API -->|SSE Event Stream /api/research/stream| WebApp
     
-    subgraph Planning & Search
-        Orchestrator --> Planner[ResearchPlanner src/research_planner.py]
-        Planner -->|Dimensions & Queries| TavilyClient[TavilySearch src/tavily_client.py]
-        TavilyClient -->|Multi-Query Execution| Deduplicator[URL Normalizer & Deduplicator]
+    subgraph Multi_Agent_Orchestrator [ResearchOrchestrator Pipeline]
+        API --> Orchestrator[ResearchOrchestrator src/research_orchestrator.py]
+        
+        subgraph LLM_Provider_Layer [Provider-Agnostic LLM Layer]
+            Orchestrator --> LLMRouter[LLM Router src/llm/provider.py]
+            LLMRouter -->|Primary| NvidiaProvider[NVIDIA NIM Provider\nnvidia/nemotron-3-super-120b-a12b]
+            LLMRouter -.->|Auto-Fallback on Failure| OpenAIProvider[OpenAI Provider\ngpt-4o]
+        end
+
+        subgraph Ingestion_And_Indexing [Ingestion & Vector Manifold]
+            Orchestrator --> Planner[ResearchPlanner src/research_planner.py]
+            Planner -->|Dimensional Decomposition| TavilyClient[TavilySearchClient src/tavily_client.py]
+            TavilyClient --> Deduplicator[URL Normalizer & Deduplicator]
+            Deduplicator --> Evaluator[SourceEvaluator src/source_evaluator.py]
+            Evaluator --> Scraper[Scraper & PyMuPDF src/scraper.py]
+            Scraper --> Chunker[Sliding-Window Chunker src/chunker.py]
+            Chunker --> LocalEmbedder[Local Hugging Face Embedder\nall-MiniLM-L6-v2 384-D]
+            LocalEmbedder --> ChromaStore[(ChromaDB Ephemeral Store\nSession-Isolated Cosine Index)]
+        end
+
+        subgraph Reflex_And_Debate [Reflex Audit & Dialectic Arbitration]
+            ChromaStore --> GapDetector{Gap Detector\nCoverage < 0.45?}
+            GapDetector -->|Yes & Iteration < Max| TavilyClient
+            GapDetector -->|Satisfied| ContradictionDetector[Contradiction Detector\nAdversarial Clustering]
+        end
+
+        subgraph Synthesis_And_Verification [Verification & Publication Engine]
+            ContradictionDetector --> Synthesizer[Research Synthesizer src/summarizer.py]
+            Synthesizer --> ClaimVerifier[Claim Verifier src/claim_verifier.py\nNLI 5-Tier Grounding]
+            ClaimVerifier --> ConfidenceEngine[Explainable Confidence Engine src/confidence.py]
+            ConfidenceEngine --> MetricsTracker[Wall-Clock Metrics Tracker src/research_metrics.py]
+            MetricsTracker --> PDFGen[ReportLab PDF Engine src/pdfgen.py\nPost-Render Page Count Validation]
+        end
     end
 
-    subgraph Evaluation & Processing
-        Deduplicator --> Evaluator[SourceEvaluator src/source_evaluator.py]
-        Evaluator -->|Filtered Sources| Scraper[Robust Scraper src/scraper.py + cleaner.py]
-        Scraper --> Chunker[Sliding Window Chunker src/chunker.py]
-        Chunker --> HFEmbedder[HuggingFace Embedder src/embedder.py\nall-MiniLM-L6-v2]
-        HFEmbedder --> ChromaStore[ChromaDB Ephemeral Client src/chroma_store.py]
-    end
-
-    subgraph Iterative Loop
-        ChromaStore --> Retriever[Semantic Evidence Retrieval]
-        Retriever --> GapDetector{Gap Detector src/gap_detector.py\nCoverage < 0.45?}
-        GapDetector -->|Yes & Iteration < Max| TavilyClient
-        GapDetector -->|Coverage Met or Max Iter| Synthesizer[Report Synthesizer src/summarizer.py]
-    end
-
-    subgraph Verification & Export
-        Synthesizer --> ClaimVerifier[Claim Verifier src/claim_verifier.py\nExtract & Ground Claims]
-        ClaimVerifier --> ContradictionDetector[Contradiction Detector src/contradiction_detector.py\nDEEP Mode]
-        ContradictionDetector --> ConfidenceEngine[Confidence Engine src/confidence.py]
-        ConfidenceEngine --> MetricsTracker[Metrics Tracker src/research_metrics.py]
-        MetricsTracker --> PDFExport[ReportLab PDF Generator src/pdfgen.py]
-    end
-
-    PDFExport --> Output([Interactive UI Tabs & Downloadable research_report.pdf])
+    PDFGen --> FinalOutput([Interactive Publication Dossier & Verified PDF Export])
 ```
 
 ---
 
 ## ⚡ Technology Stack: Separation of Concerns
 
-| Task / Responsibility | Technology / Model | Rationale |
+| Domain / Responsibility | Technology / Library | Role & Architectural Rationale |
 | :--- | :--- | :--- |
-| **Reasoning & Planning** | OpenAI `gpt-4o` | Complex decomposition, nuance, synthesis |
-| **Semantic Embeddings** | `sentence-transformers/all-MiniLM-L6-v2` | Zero API cost, fast local inference, 384-d |
-| **Vector Storage & Retrieval** | ChromaDB (`EphemeralClient`) | Session-isolated in-memory cosine index |
-| **Web Search** | Tavily Search API | AI-optimized search queries & metadata |
-| **Text Sanitization** | `BeautifulSoup4` + `unicodedata` | Script/style stripping, NFKD normalization |
-| **Document Scraping** | `requests` + `PyMuPDF` (`pymupdf`) | Robust HTML and PDF document ingestion |
-| **Frontend UI** | Streamlit | Lightweight reactive dashboard |
-| **PDF Dossier Export** | ReportLab Platypus | Professional typographic reports with tables & links |
+| **Presentation Layer** | **React 19 + TypeScript + Vite** | High-performance editorial client with responsive paper-and-ink research aesthetics. |
+| **Styling & Motion** | **Tailwind CSS + Framer Motion** | Glassmorphism, smooth micro-interactions, live research progress animation. |
+| **Topology Graph** | **@xyflow/react (React Flow v12)** | Interactive directed graph rendering the multi-agent investigation architecture. |
+| **Backend API** | **FastAPI + Uvicorn** | Asynchronous HTTP endpoints with Server-Sent Events (SSE) for sub-second telemetry. |
+| **Primary Reasoning LLM** | **NVIDIA NIM (Nemotron-3-120B)** | High-throughput structured planning, synthesis, and dialectic reasoning. |
+| **Fallback Reasoning LLM** | **OpenAI (`gpt-4o`)** | Autonomous safety net ensuring uninterrupted research execution upon upstream outages. |
+| **Semantic Embeddings** | **Hugging Face (`all-MiniLM-L6-v2`)** | 384-dimensional local vector embeddings with zero API costs and SHA256 cache. |
+| **Vector Storage** | **ChromaDB (`EphemeralClient`)** | In-memory session-isolated cosine similarity manifold. |
+| **Web Perception** | **Tavily Search API** | Multi-query AI search optimized for academic, preprint, and technical sources. |
+| **Document Scraping** | **Requests + PyMuPDF (`pymupdf`)** | Resilient HTML parsing and native multi-page PDF document extraction. |
+| **PDF Dossier Generation** | **ReportLab Platypus** | Typographically styled publication reports with post-render physical page count checks. |
+| **Legacy Dashboard** | **Streamlit** | Maintained alternative UI supporting standalone single-command execution. |
 
 ---
 
-## 📊 Research Depth Comparison
+## 📊 Research Depth Modes
 
-The system enforces distinct operational parameters based on the selected depth mode:
-
-| Feature / Parameter | Quick Mode | Standard Mode | Deep Mode |
+| Operating Parameter | Quick Mode | Standard Mode | Deep Mode |
 | :--- | :---: | :---: | :---: |
-| **Target Search Queries** | 1 focused query | 3 focused queries | 6 focused queries |
+| **Target Search Queries** | 1 focused query | 3 dimensional queries | 6 dimensional queries |
 | **Target Web Sources** | 5 sources | 10 sources | 20 sources |
-| **Maximum Research Iterations** | 1 iteration | 2 iterations | 3 iterations |
-| **Retrieved Evidence Chunks ($K$)** | 10 chunks | 20 chunks | 30 chunks |
-| **Research Planning** | Minimal / Deterministic | GPT-4o Multidimensional | GPT-4o Comprehensive |
-| **Gap Detection & Follow-ups** | Disabled | 1 follow-up analysis | Up to 2 follow-up analyses |
-| **Contradiction Analysis** | Disabled | Disabled | Enabled (Evidence Clustering) |
+| **Maximum Iterations** | 1 pass | 2 passes | 3 passes |
+| **Retrieved Evidence Chunks** | 10 chunks | 20 chunks | 30 chunks |
+| **Research Planning** | Deterministic | Multi-Dimensional (NVIDIA) | Comprehensive MECE (NVIDIA) |
+| **Gap Detection Reflex Loop** | Disabled | 1 Reflex Cycle | Up to 2 Reflex Cycles |
+| **Contradiction Debate** | Disabled | Disabled | Enabled (Adversarial Clustering) |
 | **Factual Claims Grounded** | Up to 5 claims | Up to 10 claims | Up to 20 claims |
-| **Max LLM Calls Budget** | $\le 3$ calls | $\le 8$ calls | $\le 16$ calls |
+| **LLM Call Budget** | $\le 3$ calls | $\le 8$ calls | $\le 16$ calls |
 | **Source Priority Threshold** | 0.35 | 0.45 | 0.50 |
 
 ---
 
-## 📈 Benchmark: Traditional Search vs Agentic Research PRO
+## 📈 Empirical Benchmark
 
-Empirical comparison between traditional single-query search tools and Agentic Research PRO on identical technical topics:
-
-| Evaluation Metric | Traditional Search | Agentic Research PRO (Standard) | Agentic Research PRO (Deep) |
+| Feature / Metric | Traditional Web Search | Agentic Research PRO (Standard) | Agentic Research PRO (Deep) |
 | :--- | :---: | :---: | :---: |
-| **Search Queries Generated** | 1 | 3 | 6 |
-| **Unique Sources Evaluated** | 5 | 10–14 | 18–25 |
-| **Low-Quality Sources Filtered** | 0 (None) | Yes (Heuristic Filter) | Yes (Strict Filter) |
-| **Research Dimensions Covered** | 1 (Shallow) | 3–4 Dimensions | 5–7 Dimensions |
-| **Iterative Gap Correction** | ❌ None | ✅ 1 Iteration Loop | ✅ Up to 2 Iteration Loops |
-| **Vector Evidence Passages** | 0 (Raw snippets) | 15–25 Chunks | 35–60 Chunks |
-| **Factual Claims Verified** | 0% | 10 Claims Grounded | 20 Claims Grounded |
-| **Empirical Contradictions** | ❌ Ignored | ❌ Ignored | ✅ Synthesized & Reconciled |
-| **Explainable Confidence Heuristic** | ❌ None | ✅ 5-Component Score | ✅ 5-Component Score |
-| **PDF Dossier Export** | Simple text dump | Structured Dossier | Publication-Quality Dossier |
+| **Inquiry Dimensions** | 1 (Shallow / Linear) | 3–4 Dimensions | 5–7 Dimensions |
+| **Source Priority Scoring** | ❌ None (PageRank only) | ✅ 5-Factor Heuristic | ✅ Strict Domain/Recency Filter |
+| **Autonomous Reflex Correction** | ❌ None | ✅ 1 Iterative Cycle | ✅ Up to 2 Iterative Cycles |
+| **Vector Evidence Chunks** | 0 (Raw search snippets) | 15–25 Dense Chunks | 35–60 Dense Chunks |
+| **Claim Grounding (NLI)** | ❌ None (0%) | ✅ 10 Claims Grounded | ✅ 20 Claims Grounded |
+| **Contradiction Reconciliation** | ❌ Ignored | ❌ Ignored | ✅ Synthesized Tension Matrix |
+| **Confidence Scoring** | ❌ None | ✅ 5-Factor Heuristic | ✅ 5-Factor Heuristic |
+| **Document Delivery** | Unformatted text | Publication Dossier + PDF | Verified Deep PDF Dossier |
 
 ---
 
-## 📁 Component & Module Breakdown
+## 🔌 Production API Reference
 
-* [`src/config.py`](file:///Users/utkarsh/Downloads/Agentic-Resarch-Pro-main/src/config.py): Dataclass presets (`QUICK`, `STANDARD`, `DEEP`) and LLM budgets.
-* [`src/embedder.py`](file:///Users/utkarsh/Downloads/Agentic-Resarch-Pro-main/src/embedder.py): Singleton Hugging Face sentence-transformer with SHA256 vector cache.
-* [`src/chroma_store.py`](file:///Users/utkarsh/Downloads/Agentic-Resarch-Pro-main/src/chroma_store.py): In-memory ChromaDB vector store with session isolation and cosine space.
-* [`src/research_planner.py`](file:///Users/utkarsh/Downloads/Agentic-Resarch-Pro-main/src/research_planner.py): Topic decomposition into sub-questions, dimensions, and search queries.
-* [`src/tavily_client.py`](file:///Users/utkarsh/Downloads/Agentic-Resarch-Pro-main/src/tavily_client.py): Multi-query client with query caching and canonical URL deduplication.
-* [`src/source_evaluator.py`](file:///Users/utkarsh/Downloads/Agentic-Resarch-Pro-main/src/source_evaluator.py): 5-factor priority scoring with neutral fallback for missing dates.
-* [`src/scraper.py`](file:///Users/utkarsh/Downloads/Agentic-Resarch-Pro-main/src/scraper.py): Non-blocking HTML and PyMuPDF document scraping with cleaner integration.
-* [`src/chunker.py`](file:///Users/utkarsh/Downloads/Agentic-Resarch-Pro-main/src/chunker.py): Sliding-window character chunking (1200 chars, 100 overlap).
-* [`src/gap_detector.py`](file:///Users/utkarsh/Downloads/Agentic-Resarch-Pro-main/src/gap_detector.py): Semantic coverage evaluation and follow-up query formulation.
-* [`src/summarizer.py`](file:///Users/utkarsh/Downloads/Agentic-Resarch-Pro-main/src/summarizer.py): Structured markdown report synthesis using GPT-4o.
-* [`src/claim_verifier.py`](file:///Users/utkarsh/Downloads/Agentic-Resarch-Pro-main/src/claim_verifier.py): Atomic claim extraction and batched evidence support classification.
-* [`src/contradiction_detector.py`](file:///Users/utkarsh/Downloads/Agentic-Resarch-Pro-main/src/contradiction_detector.py): Dimension-based evidence clustering and disagreement discovery.
-* [`src/confidence.py`](file:///Users/utkarsh/Downloads/Agentic-Resarch-Pro-main/src/confidence.py): Weighted 5-component confidence heuristic and diagnostic summary.
-* [`src/research_metrics.py`](file:///Users/utkarsh/Downloads/Agentic-Resarch-Pro-main/src/research_metrics.py): Real-time counter tracker and provenance metadata.
-* [`src/research_orchestrator.py`](file:///Users/utkarsh/Downloads/Agentic-Resarch-Pro-main/src/research_orchestrator.py): Central pipeline coordinator managing state and callbacks.
-* [`src/pdfgen.py`](file:///Users/utkarsh/Downloads/Agentic-Resarch-Pro-main/src/pdfgen.py): ReportLab PDF dossier generation.
-* [`src/ui/theme.py`](file:///Users/utkarsh/Downloads/Agentic-Resarch-Pro-main/src/ui/theme.py): Apple-inspired Liquid Glass design tokens, ambient background animations, and glassmorphism styling.
-* [`src/ui/components.py`](file:///Users/utkarsh/Downloads/Agentic-Resarch-Pro-main/src/ui/components.py): Reusable UI components (hero command bar, segmented depth selector, claim grounding cards, contradiction splits, confidence breakdown bars, gap coverage visualization, and methodology pipeline).
-* [`src/ui/research_progress.py`](file:///Users/utkarsh/Downloads/Agentic-Resarch-Pro-main/src/ui/research_progress.py): Live research command center, typewriter activity terminal, glowing SVG research flow, and agent status grid.
-* [`src/ui/results_view.py`](file:///Users/utkarsh/Downloads/Agentic-Resarch-Pro-main/src/ui/results_view.py): Multi-tab research workspace (Executive Dossier, Claim Grounding, Methodology, Gap Coverage, Contradictions, Confidence Engine, Source Explorer, and PDF Export).
-* [`app.py`](file:///Users/utkarsh/Downloads/Agentic-Resarch-Pro-main/app.py): Application entry point orchestrating the command center and telemetry.
+The FastAPI server provides asynchronous endpoints with Server-Sent Events (SSE) streaming:
+
+### 1. Health & LLM Status
+```http
+GET /api/health/llm
+```
+**Response:**
+```json
+{
+  "primary": {
+    "provider": "NVIDIA",
+    "model": "nvidia/nemotron-3-super-120b-a12b",
+    "configured": true,
+    "reachable": true,
+    "error": null
+  },
+  "fallback": {
+    "provider": "OpenAI",
+    "model": "gpt-4o",
+    "configured": true,
+    "reachable": true,
+    "error": null
+  },
+  "active_provider": "NVIDIA",
+  "session_id": "default"
+}
+```
+
+### 2. Initiate Research Session
+```http
+POST /api/research/start
+Content-Type: application/json
+
+{
+  "topic": "What are the major limitations of solid-state batteries for electric vehicles as of 2026?",
+  "depth": "STANDARD"
+}
+```
+**Response:**
+```json
+{
+  "session_id": "res_a1b2c3d4e5f6",
+  "status": "started",
+  "topic": "What are the major limitations of solid-state batteries for electric vehicles as of 2026?",
+  "depth": "STANDARD"
+}
+```
+
+### 3. Real-Time Telemetry Stream (SSE)
+```http
+GET /api/research/stream/{session_id}
+```
+Emits Server-Sent Events with wall-clock event timestamps and stage updates:
+```text
+data: {"type": "stage", "stage": "PLANNING", "message": "Decomposing research query into dimensional angles..."}
+data: {"type": "event", "event": {"id": "evt_1", "stage": "PLANNING", "title": "Angles Formulated", "elapsed": "00:03"}}
+data: {"type": "complete", "session_id": "res_a1b2c3d4e5f6"}
+```
+
+### 4. Fetch Structured Dossier
+```http
+GET /api/research/result/{session_id}
+```
+
+### 5. Download Verified Publication PDF
+```http
+GET /api/research/download-pdf/{session_id}
+```
+
+---
+
+## 📁 Directory Structure
+
+```text
+Agentic-Resarch-Pro/
+├── .env.example                       # Environment configuration template
+├── README.md                          # Comprehensive technical documentation
+├── requirements.txt                   # Python core dependencies
+├── server.py                          # Production FastAPI backend + SSE bridge
+├── app.py                             # Classic Streamlit research dashboard
+├── pytest.ini                         # Pytest configuration
+│
+├── src/                               # Core Python Intelligence Engine
+│   ├── config.py                      # Presets, limits, and runtime settings
+│   ├── research_orchestrator.py       # Master multi-agent pipeline coordinator
+│   ├── research_planner.py            # Dimensional multi-query decomposition
+│   ├── tavily_client.py               # AI search client with deduplication
+│   ├── source_evaluator.py            # 5-factor source quality scoring
+│   ├── scraper.py                     # HTML and PyMuPDF document scraper
+│   ├── cleaner.py                     # Unicode and tag sanitization
+│   ├── chunker.py                     # Sliding-window text chunker
+│   ├── embedder.py                    # Local Hugging Face sentence-transformers
+│   ├── chroma_store.py                # Ephemeral ChromaDB vector manifold
+│   ├── gap_detector.py                # Semantic coverage audit & reflex query
+│   ├── contradiction_detector.py      # Adversarial dialectic conflict clustering
+│   ├── claim_verifier.py              # Atomic NLI claim verification
+│   ├── summarizer.py                  # Structured dossier synthesis
+│   ├── confidence.py                  # Explainable 5-component confidence heuristic
+│   ├── research_metrics.py            # Wall-clock timer and execution metrics
+│   ├── pdfgen.py                      # ReportLab PDF generator & page validator
+│   │
+│   ├── llm/                           # Provider-Agnostic LLM Layer
+│   │   ├── __init__.py                # LLM factory and provider routing
+│   │   ├── provider.py                # Abstract LLMProvider interface
+│   │   ├── nvidia_provider.py         # NVIDIA NIM Nemotron-3-120B provider
+│   │   └── openai_provider.py         # OpenAI GPT-4o fallback provider
+│   │
+│   └── ui/                            # Streamlit Presentation Components
+│       ├── theme.py                   # Styling tokens and CSS injects
+│       ├── components.py              # Visual cards and widgets
+│       ├── research_progress.py       # Progress bars and live state display
+│       └── results_view.py            # Dossier tabs and inspection panels
+│
+├── frontend/                          # Production React Presentation Layer
+│   ├── package.json                   # React 19, Vite, Tailwind, Framer Motion
+│   ├── tailwind.config.js             # Research design tokens and palettes
+│   ├── vite.config.ts                 # Build configuration with proxy
+│   ├── dist/                          # Compiled static bundle served by FastAPI
+│   └── src/
+│       ├── App.tsx                    # Top-level screen coordinator
+│       ├── components/
+│       │   ├── AgenticHeroGraph.tsx   # Interactive 5-tier multi-agent topology
+│       │   ├── ResearchComposer.tsx   # Command surface with depth selector
+│       │   ├── LiveResearchTrail.tsx  # Wall-clock live timeline & event feed
+│       │   ├── ContinuousDossierView.tsx # Publication dossier & claim matrix
+│       │   └── WhyDifferentModal.tsx  # Architectural comparative modal
+│       └── types/
+│           └── research.ts            # TypeScript data contracts & schemas
+│
+└── tests/                             # Comprehensive Test Suite (67 tests)
+    ├── test_llm_provider.py           # NVIDIA provider & automatic fallback tests
+    ├── test_server.py                 # FastAPI endpoints & SSE stream tests
+    ├── test_chroma_store.py           # Vector manifold isolation & retrieval
+    ├── test_claim_verifier.py         # Claim extraction & NLI grounding tests
+    ├── test_contradiction_detector.py # Adversarial clustering tests
+    ├── test_gap_detector.py           # Semantic coverage & follow-up tests
+    ├── test_embedder.py               # Hugging Face embeddings & cache tests
+    ├── test_pdfgen.py                 # ReportLab generation & page count tests
+    └── ...                            # Full unit & end-to-end coverage
+```
 
 ---
 
 ## 🚀 Installation & Quick Start
 
-### 1. Prerequisites
-* Python 3.10 or 3.11+
-* OpenAI API Key (for GPT-4o reasoning)
-* Tavily API Key (for real-time web search)
+### 1. System Requirements
+* **Python**: `3.10` or `3.11+`
+* **Node.js**: `18+` (only required if modifying the React frontend)
+* **API Keys**:
+  * `NVIDIA_API_KEY` (Free tier available on [NVIDIA Build](https://build.nvidia.com/))
+  * `OPENAI_API_KEY` (Required for automatic fallback safety net)
+  * `TAVILY_API_KEY` (Web search API key from [Tavily](https://tavily.com/))
 
-### 2. Environment Setup
+### 2. Clone & Environment Setup
 ```bash
 # Clone the repository
 git clone https://github.com/JustXutkarsh/Agentic-Resarch-Pro.git
 cd Agentic-Resarch-Pro
 
-# Create and activate virtual environment
+# Create virtual environment
 python3 -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
 
-# Install dependencies
+# Install Python dependencies
 pip install -r requirements.txt
 ```
 
-### 3. API Key Configuration
-Create a `.env` file in the root directory:
-```env
-OPENAI_API_KEY=sk-proj-xxxxxxxxxxxxxxxxxxxx
-TAVILY_API_KEY=tvly-xxxxxxxxxxxxxxxxxxxx
-```
-*(Alternatively, enter them directly into the Streamlit sidebar during your session).*
-
-### 4. Run the Streamlit Application
+### 3. Configure Environment Variables
+Copy `.env.example` to `.env` and provide your credentials:
 ```bash
-./venv/bin/streamlit run app.py
+cp .env.example .env
 ```
-Open **`http://localhost:8501`** in your browser.
+Edit `.env`:
+```env
+# Primary LLM Provider: NVIDIA NIM (Nemotron 120B)
+NVIDIA_API_KEY=nvapi-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+NVIDIA_BASE_URL=https://integrate.api.nvidia.com/v1
+NVIDIA_MODEL=nvidia/nemotron-3-super-120b-a12b
+LLM_PROVIDER=nvidia
+
+# Fallback LLM Provider (Safety Net)
+OPENAI_API_KEY=sk-proj-xxxxxxxxxxxxxxxxxxxxxxxxxxxx
+OPENAI_MODEL=gpt-4o
+
+# Real-Time Web Search API
+TAVILY_API_KEY=tvly-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+### 4. Run the Production Application
+Launch the unified FastAPI server (which automatically serves the compiled React interface):
+```bash
+python server.py
+```
+Open your browser at **`http://localhost:8000`**.
+
+*(Optional) To run the Streamlit dashboard instead:*
+```bash
+streamlit run app.py
+```
+
+### 5. (Optional) Frontend Development Mode
+If you wish to edit the React frontend with live hot-module replacement (HMR):
+```bash
+cd frontend
+npm install
+npm run dev
+```
+The Vite dev server will proxy API requests to `http://localhost:8000`.
 
 ---
 
 ## 🧪 Testing & Quality Assurance
 
-The project includes an extensive test suite covering every module with unit and end-to-end integration tests:
+The codebase maintains a 100% pass rate across **67 automated tests**:
 
 ```bash
-# Run all 54 tests
-./venv/bin/pytest tests/
+# Run all tests
+pytest tests/ -v
 ```
 
-### Test Suite Summary:
-* `tests/test_config.py`: Verifies parameters, presets, and model constants (4 tests).
-* `tests/test_embedder.py`: Tests singleton model loading, SHA256 cache, dimensions, batching (6 tests).
-* `tests/test_chroma_store.py`: Tests session isolation, metadata storage, cosine ranking (4 tests).
-* `tests/test_research_planner.py`: Tests query decomposition, depth limits, fallback handling (4 tests).
-* `tests/test_tavily_client.py`: Tests URL normalization, deduplication, query caching (6 tests).
-* `tests/test_source_evaluator.py`: Tests domain authority, recency fallback, evidence scoring (5 tests).
-* `tests/test_scraper.py`: Tests HTML parsing, cleaner integration, fault tolerance (4 tests).
-* `tests/test_gap_detector.py`: Tests dimension coverage calculation and follow-up loops (5 tests).
-* `tests/test_claim_verifier.py`: Tests claim prioritization, retrieval, support classification (3 tests).
-* `tests/test_contradiction_detector.py`: Tests evidence clustering, tension identification (3 tests).
-* `tests/test_confidence.py`: Tests mathematical weighting, bound enforcement, explanations (3 tests).
-* `tests/test_research_metrics.py`: Tests real execution counters and timestamping (1 test).
-* `tests/test_research_orchestrator.py`: Tests end-to-end orchestration and callbacks (1 test).
-* `tests/test_pdfgen.py`: Tests ReportLab document generation, table formatting, and styling (2 tests).
-* `tests/test_end_to_end.py`: Tests Quick vs Deep operational hierarchy and benchmark profiles (3 tests).
-
-**Result:** `54 passed in 17.73s` (100% pass rate).
+### Test Suite Coverage:
+* `tests/test_llm_provider.py`: NVIDIA NIM routing, OpenAI fallback, error recovery (9 tests).
+* `tests/test_server.py`: FastAPI health endpoints, session creation, SSE streaming (4 tests).
+* `tests/test_config.py`: Operational parameters, budgets, depth profiles (4 tests).
+* `tests/test_embedder.py`: Singleton model loader, SHA256 caching, batching (6 tests).
+* `tests/test_chroma_store.py`: Session isolation, cosine similarity retrieval (4 tests).
+* `tests/test_research_planner.py`: Multi-perspective dimensional planning (4 tests).
+* `tests/test_tavily_client.py`: Multi-query deduplication and query caching (6 tests).
+* `tests/test_source_evaluator.py`: 5-factor source quality scoring (5 tests).
+* `tests/test_scraper.py`: HTML scraping and PyMuPDF document extraction (4 tests).
+* `tests/test_gap_detector.py`: Semantic coverage and reflex loop generation (5 tests).
+* `tests/test_claim_verifier.py`: Atomic extraction and NLI support classification (3 tests).
+* `tests/test_contradiction_detector.py`: Dialectic evidence clustering and tension checks (3 tests).
+* `tests/test_confidence.py`: Mathematical 5-factor weighting and explanations (3 tests).
+* `tests/test_research_metrics.py`: Wall-clock timing and counters (1 test).
+* `tests/test_research_orchestrator.py`: Full orchestration cycle with callbacks (1 test).
+* `tests/test_pdfgen.py`: ReportLab layout, table formatting, and page validation (2 tests).
+* `tests/test_end_to_end.py`: Multi-depth operational hierarchies (3 tests).
 
 ---
 
-## ⚖️ Academic Disclaimer
+## ⚖️ Academic & Methodological Disclaimer
 
-> **Research Confidence is a system-generated heuristic based on evidence coverage, source prioritization, claim support, source agreement, and research completeness. It does not represent objective scientific certainty or independently verified truth.**
+> **The Research Confidence Score is an algorithmic heuristic derived from source quality heuristics, semantic evidence coverage, claim verification ratios, source consensus, and dimensional completeness. It is intended to assist human synthesis and does not substitute for independent peer-reviewed domain validation.**
+
+---
+
+## 👤 Author & Attribution
+
+* **Built by**: **Utkarsh Pandey**
+* **Repository**: [JustXutkarsh/Agentic-Resarch-Pro](https://github.com/JustXutkarsh/Agentic-Resarch-Pro)
 
 ---
 
