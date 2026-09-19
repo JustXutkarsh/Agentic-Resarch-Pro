@@ -22,6 +22,7 @@ const NetworkNode = ({
 }) => {
   const isInsight = data.tag === 'INSIGHT';
   const isQuestion = data.tag === 'QUESTION';
+  const isPlaywright = data.tag === 'PLAYWRIGHT';
 
   return (
     <div
@@ -32,6 +33,8 @@ const NetworkNode = ({
           ? 'bg-white/90 border-research-green text-research-green font-semibold shadow-sm'
           : isQuestion
           ? 'bg-white/95 border-research-primary text-research-primary font-semibold shadow-subtle'
+          : isPlaywright
+          ? 'bg-white/95 border-research-blue/70 text-research-blue font-semibold shadow-subtle hover:border-research-blue'
           : 'bg-white/80 border-research-border text-research-secondary shadow-subtle hover:border-research-blue/60'
       }`}
       style={{ minWidth: 90 }}
@@ -44,6 +47,8 @@ const NetworkNode = ({
               ? 'bg-research-blue animate-ping'
               : isInsight
               ? 'bg-research-green'
+              : isPlaywright
+              ? 'bg-research-blue'
               : 'bg-research-border'
           }`}
         />
@@ -91,27 +96,33 @@ export const AgenticHeroGraph: React.FC<AgenticHeroGraphProps> = ({ isResearchin
         data: { label: 'Historical Precedent', tag: 'ANGLE 3', active: isResearching },
       },
       {
-        id: 'ev',
-        type: 'network',
-        position: { x: 150, y: 180 },
-        data: { label: 'ChromaDB Vectors', tag: 'EVIDENCE', active: isResearching },
-      },
-      {
         id: 'src',
         type: 'network',
-        position: { x: 370, y: 180 },
+        position: { x: 60, y: 180 },
         data: { label: 'Tavily Sources', tag: 'SOURCES', active: isResearching },
+      },
+      {
+        id: 'pw',
+        type: 'network',
+        position: { x: 260, y: 180 },
+        data: { label: 'Playwright Agent', tag: 'PLAYWRIGHT', active: isResearching },
+      },
+      {
+        id: 'ev',
+        type: 'network',
+        position: { x: 460, y: 180 },
+        data: { label: 'ChromaDB Vectors', tag: 'EVIDENCE', active: isResearching },
       },
       {
         id: 'ver',
         type: 'network',
-        position: { x: 260, y: 260 },
+        position: { x: 260, y: 265 },
         data: { label: 'Claim Verification', tag: 'VERIFY', active: isResearching },
       },
       {
         id: 'ins',
         type: 'network',
-        position: { x: 260, y: 340 },
+        position: { x: 260, y: 345 },
         data: { label: 'Synthesized Dossier', tag: 'INSIGHT', active: isResearching },
       },
     ],
@@ -123,12 +134,14 @@ export const AgenticHeroGraph: React.FC<AgenticHeroGraphProps> = ({ isResearchin
       { id: 'e-q-a1', source: 'q', target: 'a1', animated: true, style: { stroke: isResearching ? '#315BFF' : '#D1CFCA', strokeWidth: 1.5 } },
       { id: 'e-q-a2', source: 'q', target: 'a2', animated: true, style: { stroke: isResearching ? '#315BFF' : '#D1CFCA', strokeWidth: 1.5 } },
       { id: 'e-q-a3', source: 'q', target: 'a3', animated: true, style: { stroke: isResearching ? '#315BFF' : '#D1CFCA', strokeWidth: 1.5 } },
-      { id: 'e-a1-ev', source: 'a1', target: 'ev', animated: true, style: { stroke: isResearching ? '#315BFF' : '#D1CFCA', strokeWidth: 1.2 } },
-      { id: 'e-a2-ev', source: 'a2', target: 'ev', animated: true, style: { stroke: isResearching ? '#315BFF' : '#D1CFCA', strokeWidth: 1.2 } },
-      { id: 'e-a2-src', source: 'a2', target: 'src', animated: true, style: { stroke: isResearching ? '#315BFF' : '#D1CFCA', strokeWidth: 1.2 } },
-      { id: 'e-a3-src', source: 'a3', target: 'src', animated: true, style: { stroke: isResearching ? '#315BFF' : '#D1CFCA', strokeWidth: 1.2 } },
+      { id: 'e-a1-src', source: 'a1', target: 'src', animated: true, style: { stroke: isResearching ? '#315BFF' : '#D1CFCA', strokeWidth: 1.2 } },
+      { id: 'e-a2-pw', source: 'a2', target: 'pw', animated: true, style: { stroke: isResearching ? '#315BFF' : '#D1CFCA', strokeWidth: 1.5 } },
+      { id: 'e-a3-ev', source: 'a3', target: 'ev', animated: true, style: { stroke: isResearching ? '#315BFF' : '#D1CFCA', strokeWidth: 1.2 } },
+      { id: 'e-src-pw', source: 'src', target: 'pw', animated: true, style: { stroke: isResearching ? '#315BFF' : '#D1CFCA', strokeWidth: 1.3 } },
+      { id: 'e-pw-ev', source: 'pw', target: 'ev', animated: true, style: { stroke: isResearching ? '#315BFF' : '#D1CFCA', strokeWidth: 1.3 } },
+      { id: 'e-src-ver', source: 'src', target: 'ver', animated: true, style: { stroke: isResearching ? '#168463' : '#D1CFCA', strokeWidth: 1.2 } },
+      { id: 'e-pw-ver', source: 'pw', target: 'ver', animated: true, style: { stroke: isResearching ? '#168463' : '#D1CFCA', strokeWidth: 1.5 } },
       { id: 'e-ev-ver', source: 'ev', target: 'ver', animated: true, style: { stroke: isResearching ? '#168463' : '#D1CFCA', strokeWidth: 1.5 } },
-      { id: 'e-src-ver', source: 'src', target: 'ver', animated: true, style: { stroke: isResearching ? '#168463' : '#D1CFCA', strokeWidth: 1.5 } },
       { id: 'e-ver-ins', source: 'ver', target: 'ins', animated: true, style: { stroke: isResearching ? '#315BFF' : '#D1CFCA', strokeWidth: 2 } },
     ],
     [isResearching]
