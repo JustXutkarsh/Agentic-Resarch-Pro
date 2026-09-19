@@ -54,7 +54,24 @@ def humanize_backend_message(step_name: str, raw_msg: str) -> str:
         return "Evaluating source relevance and institutional authority"
 
 
-    # Step 5: Content Scraping & Extraction
+    # Step 5: Content Scraping & Browser Agent
+    if "PLAYWRIGHT" in step or "ACQUISITION" in step or "BROWSER" in step:
+        if "detect" in step.lower() or "detect" in msg.lower():
+            return "Dynamic source detected; activating Playwright browser agent"
+        if "init" in step.lower() or "opening" in msg.lower():
+            return "Opening interactive source in headless browser session"
+        if "expand" in step.lower() or "inspect" in msg.lower():
+            return "Inspecting dynamic DOM, expandable sections & data tables"
+        if "page" in step.lower() or "pagin" in msg.lower():
+            return "Navigating multi-page evidence repository"
+        if "table" in msg.lower():
+            return "Extracting structured data tables preserving row relationships"
+        if "pdf" in msg.lower() or "pdf" in step.lower():
+            return "Extracting and parsing academic PDF document"
+        if "success" in step.lower() or "acquired" in msg.lower():
+            return "Extracted interactive evidence via browser agent"
+        return "Acquiring dynamic evidence via browser agent"
+
     if "SCRAP" in step:
         if "parsed" in msg.lower():
             return "Extracted primary evidence passages and citations"

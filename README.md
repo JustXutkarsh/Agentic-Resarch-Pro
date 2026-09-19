@@ -8,9 +8,10 @@
 [![Primary LLM](https://img.shields.io/badge/Primary%20LLM-NVIDIA%20Nemotron--3--120B-76B900.svg)](https://build.nvidia.com/)
 [![Fallback LLM](https://img.shields.io/badge/Fallback%20LLM-OpenAI%20GPT--4o-412991.svg)](https://openai.com/)
 [![Local Embeddings](https://img.shields.io/badge/Embeddings-all--MiniLM--L6--v2%20(Local)-brightgreen.svg)](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2)
+[![Acquisition Engine](https://img.shields.io/badge/Acquisition-Playwright%20Chromium%20%2B%20PyMuPDF-red.svg)](src/acquisition/)
 [![Vector Store](https://img.shields.io/badge/VectorDB-ChromaDB%20(Session--Isolated)-purple.svg)](https://www.trychroma.com/)
 [![Search Engine](https://img.shields.io/badge/Search-Tavily%20Multi--Query-teal.svg)](https://tavily.com/)
-[![Test Suite](https://img.shields.io/badge/Tests-67%20Passed%20(100%25)-success.svg)](tests/)
+[![Test Suite](https://img.shields.io/badge/Tests-85%20Passed%20(100%25)-success.svg)](tests/)
 [![Attribution](https://img.shields.io/badge/Built%20by-Utkarsh%20Pandey-black.svg)](#-author--attribution)
 
 ---
@@ -72,6 +73,12 @@ In **Deep Mode**, the system actively clusters competing empirical evidence acro
 A transparent composite confidence score ($0 - 100$) is computed mathematically without hallucination:
 $$\text{Confidence} = 25\%\,Q_{\text{source}} + 20\%\,C_{\text{evidence}} + 25\%\,S_{\text{claims}} + 15\%\,A_{\text{agreement}} + 15\%\,K_{\text{completeness}}$$
 
+### 7. Autonomous Playwright Research Acquisition Layer
+Web evidence ingestion dynamically routes across three specialized acquisition engines via `SourceRouter`:
+* **Static HTTP Engine (`HttpAcquirer`)**: High-throughput extraction via Requests and BeautifulSoup, with real-time heuristic detection of client-side dynamic frameworks, empty SPA mounting shells, and low text-to-code ratios.
+* **Academic PDF Engine (`PdfAcquirer`)**: High-fidelity streaming extraction via PyMuPDF with size gating (20MB) and page bounding (25 pages).
+* **Interactive Browser Agent (`PlaywrightAgent`)**: Headless Chromium instance executing read-only browser exploration. Handles JavaScript-heavy single-page applications, converts HTML tables into structured Markdown preserving column/row semantics for vector embedding, expands collapsible accordion panels (`aria-expanded="false"`, `<details>`), and performs bounded incremental scrolling and pagination. Includes automated fallback to HTTP upon navigation timeouts or bot challenges.
+
 ---
 
 ## 🗺️ System Architecture Topology
@@ -96,8 +103,13 @@ flowchart TD
             Planner -->|Dimensional Decomposition| TavilyClient[TavilySearchClient src/tavily_client.py]
             TavilyClient --> Deduplicator[URL Normalizer & Deduplicator]
             Deduplicator --> Evaluator[SourceEvaluator src/source_evaluator.py]
-            Evaluator --> Scraper[Scraper & PyMuPDF src/scraper.py]
-            Scraper --> Chunker[Sliding-Window Chunker src/chunker.py]
+            Evaluator --> Router[SourceRouter src/acquisition/source_router.py]
+            Router -->|Static Web| HttpAcq[HttpAcquirer Requests + bs4]
+            Router -->|Academic Papers| PdfAcq[PdfAcquirer PyMuPDF]
+            Router -->|Dynamic/SPAs/Tables| PwAgent[PlaywrightAgent Headless Chromium]
+            HttpAcq --> Chunker[Sliding-Window Chunker src/chunker.py]
+            PdfAcq --> Chunker
+            PwAgent --> Chunker
             Chunker --> LocalEmbedder[Local Hugging Face Embedder\nall-MiniLM-L6-v2 384-D]
             LocalEmbedder --> ChromaStore[(ChromaDB Ephemeral Store\nSession-Isolated Cosine Index)]
         end
@@ -135,7 +147,8 @@ flowchart TD
 | **Semantic Embeddings** | **Hugging Face (`all-MiniLM-L6-v2`)** | 384-dimensional local vector embeddings with zero API costs and SHA256 cache. |
 | **Vector Storage** | **ChromaDB (`EphemeralClient`)** | In-memory session-isolated cosine similarity manifold. |
 | **Web Perception** | **Tavily Search API** | Multi-query AI search optimized for academic, preprint, and technical sources. |
-| **Document Scraping** | **Requests + PyMuPDF (`pymupdf`)** | Resilient HTML parsing and native multi-page PDF document extraction. |
+| **Interactive Acquisition** | **Playwright (`playwright>=1.40.0`)** | Headless Chromium agent for SPA rendering, dynamic tables to Markdown, and accordion expansion. |
+| **Document Scraping** | **Requests + PyMuPDF (`pymupdf`)** | Resilient static HTML parsing and native multi-page academic PDF document extraction. |
 | **PDF Dossier Generation** | **ReportLab Platypus** | Typographically styled publication reports with post-render physical page count checks. |
 | **Legacy Dashboard** | **Streamlit** | Maintained alternative UI supporting standalone single-command execution. |
 
@@ -263,7 +276,7 @@ Agentic-Resarch-Pro/
 │   ├── research_planner.py            # Dimensional multi-query decomposition
 │   ├── tavily_client.py               # AI search client with deduplication
 │   ├── source_evaluator.py            # 5-factor source quality scoring
-│   ├── scraper.py                     # HTML and PyMuPDF document scraper
+│   ├── scraper.py                     # Backward-compatible scraper façade
 │   ├── cleaner.py                     # Unicode and tag sanitization
 │   ├── chunker.py                     # Sliding-window text chunker
 │   ├── embedder.py                    # Local Hugging Face sentence-transformers
@@ -275,6 +288,14 @@ Agentic-Resarch-Pro/
 │   ├── confidence.py                  # Explainable 5-component confidence heuristic
 │   ├── research_metrics.py            # Wall-clock timer and execution metrics
 │   ├── pdfgen.py                      # ReportLab PDF generator & page validator
+│   │
+│   ├── acquisition/                   # Multi-Engine Autonomous Acquisition Layer
+│   │   ├── __init__.py                # Package exports & public API
+│   │   ├── evidence_document.py       # Unified ScrapedDocument / EvidenceDocument
+│   │   ├── source_router.py           # Multi-engine routing & dynamic fallback
+│   │   ├── http_acquirer.py           # Requests + bs4 + dynamic signal detector
+│   │   ├── pdf_acquirer.py            # Academic streaming PyMuPDF extractor
+│   │   └── playwright_agent.py        # Headless Chromium agent (tables, accordions, scroll)
 │   │
 │   ├── llm/                           # Provider-Agnostic LLM Layer
 │   │   ├── __init__.py                # LLM factory and provider routing
@@ -304,7 +325,8 @@ Agentic-Resarch-Pro/
 │       └── types/
 │           └── research.ts            # TypeScript data contracts & schemas
 │
-└── tests/                             # Comprehensive Test Suite (67 tests)
+└── tests/                             # Comprehensive Test Suite (85 tests)
+    ├── test_acquisition.py            # Multi-engine routing & Playwright browser tests
     ├── test_llm_provider.py           # NVIDIA provider & automatic fallback tests
     ├── test_server.py                 # FastAPI endpoints & SSE stream tests
     ├── test_chroma_store.py           # Vector manifold isolation & retrieval
@@ -338,8 +360,9 @@ cd Agentic-Resarch-Pro
 python3 -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
 
-# Install Python dependencies
+# Install Python dependencies & Playwright browser runtime
 pip install -r requirements.txt
+playwright install chromium
 ```
 
 ### 3. Configure Environment Variables
@@ -361,6 +384,13 @@ OPENAI_MODEL=gpt-4o
 
 # Real-Time Web Search API
 TAVILY_API_KEY=tvly-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+# Interactive Research Acquisition Agent (Playwright)
+PLAYWRIGHT_ENABLED=true
+PLAYWRIGHT_HEADLESS=true
+PLAYWRIGHT_MAX_PAGES=3
+PLAYWRIGHT_MAX_SCROLLS=5
+PLAYWRIGHT_TIMEOUT_MS=15000
 ```
 
 ### 4. Run the Production Application
@@ -388,7 +418,7 @@ The Vite dev server will proxy API requests to `http://localhost:8000`.
 
 ## 🧪 Testing & Quality Assurance
 
-The codebase maintains a 100% pass rate across **67 automated tests**:
+The codebase maintains a 100% pass rate across **85 automated tests**:
 
 ```bash
 # Run all tests
@@ -396,6 +426,7 @@ pytest tests/ -v
 ```
 
 ### Test Suite Coverage:
+* `tests/test_acquisition.py`: Source routing, Playwright dynamic extraction, Markdown table generation, accordion expansion, bounded scrolling/pagination, HTTP fallback (18 tests).
 * `tests/test_llm_provider.py`: NVIDIA NIM routing, OpenAI fallback, error recovery (9 tests).
 * `tests/test_server.py`: FastAPI health endpoints, session creation, SSE streaming (4 tests).
 * `tests/test_config.py`: Operational parameters, budgets, depth profiles (4 tests).

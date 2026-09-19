@@ -1,7 +1,7 @@
 """
 Research Metrics Tracker for Agentic Research PRO.
 Records real execution counters, timestamps, throughput metrics,
-and reproducibility metadata across the end-to-end pipeline.
+acquisition telemetry, and reproducibility metadata across the end-to-end pipeline.
 """
 
 from dataclasses import dataclass, field
@@ -39,6 +39,15 @@ class ResearchMetrics:
     weakly_supported_claims: int = 0
     contradictions_detected: int = 0
     llm_calls_made: int = 0
+
+    # Acquisition Subsystem Telemetry
+    http_acquisitions: int = 0
+    pdf_acquisitions: int = 0
+    playwright_acquisitions: int = 0
+    successful_playwright_acquisitions: int = 0
+    failed_playwright_acquisitions: int = 0
+    pages_visited: int = 0
+    evidence_documents_acquired: int = 0
 
     # Reproducibility metadata
     llm_model: str = LLM_MODEL
@@ -80,6 +89,13 @@ class ResearchMetrics:
             "weakly_supported_claims": self.weakly_supported_claims,
             "contradictions_detected": self.contradictions_detected,
             "llm_calls_made": self.llm_calls_made,
+            "http_acquisitions": self.http_acquisitions,
+            "pdf_acquisitions": self.pdf_acquisitions,
+            "playwright_acquisitions": self.playwright_acquisitions,
+            "successful_playwright_acquisitions": self.successful_playwright_acquisitions,
+            "failed_playwright_acquisitions": self.failed_playwright_acquisitions,
+            "pages_visited": self.pages_visited,
+            "evidence_documents_acquired": self.evidence_documents_acquired,
             "llm_model": self.llm_model,
             "llm_provider": self.llm_provider,
             "embedding_model": self.embedding_model,

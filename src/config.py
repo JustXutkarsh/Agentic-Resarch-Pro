@@ -17,6 +17,13 @@ LLM_MODEL = NVIDIA_MODEL if LLM_PROVIDER == "nvidia" else OPENAI_MODEL
 EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 EMBEDDING_DIMENSION = 384
 
+# Playwright Browser Acquisition Configuration
+PLAYWRIGHT_ENABLED = os.getenv("PLAYWRIGHT_ENABLED", "true").strip().lower() in ("true", "1", "yes")
+PLAYWRIGHT_HEADLESS = os.getenv("PLAYWRIGHT_HEADLESS", "true").strip().lower() in ("true", "1", "yes")
+PLAYWRIGHT_MAX_PAGES = int(os.getenv("PLAYWRIGHT_MAX_PAGES", "3"))
+PLAYWRIGHT_MAX_SCROLLS = int(os.getenv("PLAYWRIGHT_MAX_SCROLLS", "5"))
+PLAYWRIGHT_TIMEOUT_MS = int(os.getenv("PLAYWRIGHT_TIMEOUT_MS", "15000"))
+
 
 @dataclass(frozen=True)
 class ResearchConfig:

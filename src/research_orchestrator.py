@@ -23,6 +23,7 @@ from src.research_planner import ResearchPlanner, ResearchPlan
 from src.tavily_client import TavilySearch
 from src.source_evaluator import evaluate_and_filter_sources
 from src.scraper import scrape_sources, ScrapedDocument
+from src.acquisition.source_router import SourceRouter
 from src.chunker import chunk_text
 from src.embedder import embed_documents
 from src.chroma_store import get_vector_store, save_vectors, retrieve_relevant_chunks
@@ -153,6 +154,7 @@ class ResearchOrchestrator:
         claim_verifier: Optional[ClaimVerifier] = None,
         contradiction_detector: Optional[ContradictionDetector] = None,
         llm_provider: Optional[LLMProvider] = None,
+        source_router: Optional[SourceRouter] = None,
     ):
         self.llm_provider = llm_provider
         self.planner = planner or ResearchPlanner(llm_provider=llm_provider)
@@ -161,6 +163,7 @@ class ResearchOrchestrator:
         self.summarizer = summarizer or Summarizer(llm_provider=llm_provider)
         self.claim_verifier = claim_verifier or ClaimVerifier(llm_provider=llm_provider)
         self.contradiction_detector = contradiction_detector or ContradictionDetector(llm_provider=llm_provider)
+        self.source_router = source_router or SourceRouter()
 
     def run_research(
         self,
@@ -266,19 +269,40 @@ class ResearchOrchestrator:
             metrics.sources_rejected += len(rejected)
             report_step("EVALUATOR", 0.30 + (iteration - 1) * 0.20, f"Accepted {len(accepted)} sources (Rejected: {len(rejected)}).")
 
-            # 3. Scraping & Cleaning
-            report_step("SCRAPER", 0.32 + (iteration - 1) * 0.20, f"Scraping content from {len(accepted)} accepted sources...")
-            docs, failed_sources = scrape_sources(accepted, timeout=12)
+            # 3. Source Acquisition (HTTP, PDF, and Playwright Browser Agent)
+            report_step("SCRAPER", 0.32 + (iteration - 1) * 0.20, f"Acquiring evidence from {len(accepted)} accepted sources...")
+            docs, failed_sources, acq_metrics = self.source_router.acquire_sources(
+                accepted,
+                research_objective=topic,
+                progress_callback=report_step,
+            )
             state.documents.extend(docs)
             metrics.total_documents += len(docs)
+            metrics.evidence_documents_acquired += len(docs)
             metrics.scraping_failures += len(failed_sources)
-            report_step("SCRAPER", 0.35 + (iteration - 1) * 0.20, f"Successfully parsed {len(docs)} documents ({len(failed_sources)} failed).")
+            metrics.http_acquisitions += acq_metrics.get("http_acquisitions", 0)
+            metrics.pdf_acquisitions += acq_metrics.get("pdf_acquisitions", 0)
+            metrics.playwright_acquisitions += acq_metrics.get("playwright_acquisitions", 0)
+            metrics.successful_playwright_acquisitions += acq_metrics.get("successful_playwright", 0)
+            metrics.failed_playwright_acquisitions += acq_metrics.get("failed_playwright", 0)
+            metrics.pages_visited += acq_metrics.get("pages_visited", 0)
+
+            report_step(
+                "SCRAPER",
+                0.35 + (iteration - 1) * 0.20,
+                f"Successfully parsed {len(docs)} documents "
+                f"(HTTP: {acq_metrics.get('http_acquisitions', 0)}, "
+                f"PDF: {acq_metrics.get('pdf_acquisitions', 0)}, "
+                f"Browser: {acq_metrics.get('playwright_acquisitions', 0)}; "
+                f"{len(failed_sources)} failed)."
+            )
 
             # 4. Chunking
             iteration_chunks = []
             iteration_metadatas = []
             for doc in docs:
                 raw_chunks = chunk_text(doc.content, chunk_size=1200, overlap=100)
+                acq_method = getattr(doc, "acquisition_method", "http")
                 for chunk in raw_chunks:
                     iteration_chunks.append(chunk)
                     iteration_metadatas.append({
@@ -287,6 +311,7 @@ class ResearchOrchestrator:
                         "search_query": doc.search_query,
                         "source_score": doc.source_score,
                         "research_iteration": iteration,
+                        "acquisition_method": acq_method,
                     })
 
             state.chunks.extend(iteration_chunks)

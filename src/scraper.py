@@ -1,16 +1,17 @@
 """
 Robust Web and PDF Scraping Pipeline for Agentic Research PRO.
 Integrates deep text cleaning, timeout enforcement, domain filtering,
-and fault-tolerant per-source error recovery.
+and fault-tolerant per-source error recovery via the Acquisition Subsystem.
 """
 
 import logging
 import re
-from dataclasses import dataclass, field
 from typing import List, Dict, Any, Tuple, Optional
 import requests
 from bs4 import BeautifulSoup
 from src.cleaner import clean_text
+from src.acquisition.evidence_document import ScrapedDocument, EvidenceDocument
+from src.acquisition.source_router import is_supported_url, BLOCKED_DOMAINS
 
 logger = logging.getLogger(__name__)
 
@@ -24,40 +25,6 @@ RESEARCH_HEADERS = {
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     "Accept-Language": "en-US,en;q=0.9",
 }
-
-# Domains to skip because they require login walls, complex JS renderers, or are video-only
-BLOCKED_DOMAINS = [
-    "youtube.com", "youtu.be", "twitter.com", "x.com",
-    "instagram.com", "tiktok.com", "facebook.com", "linkedin.com"
-]
-
-
-@dataclass
-class ScrapedDocument:
-    """Represents a successfully scraped and sanitized document."""
-    url: str
-    title: str
-    content: str
-    search_query: str = ""
-    research_iteration: int = 1
-    source_score: float = 0.5
-    char_count: int = 0
-    metadata: Dict[str, Any] = field(default_factory=dict)
-
-    def __post_init__(self):
-        if self.content and not self.char_count:
-            self.char_count = len(self.content)
-
-
-def is_supported_url(url: str) -> bool:
-    """Check if URL is supported for scraping."""
-    if not url:
-        return False
-    lower = url.lower()
-    for domain in BLOCKED_DOMAINS:
-        if domain in lower:
-            return False
-    return lower.startswith("http://") or lower.startswith("https://")
 
 
 def scrape_pdf_content(url: str, timeout: int = 12) -> Optional[str]:
@@ -125,77 +92,50 @@ def scrape_single_source(
     source: Dict[str, Any],
     timeout: int = 12,
     max_chars: int = 8000,
+    progress_callback: Optional[Any] = None,
 ) -> Optional[ScrapedDocument]:
     """
-    Scrape a single source dictionary.
+    Scrape a single source dictionary using the SourceRouter.
     Returns ScrapedDocument on success, or None on failure.
     """
-    url = source.get("url", "").strip()
-    title = source.get("title", "")
-    query = source.get("search_query", "")
-    iteration = source.get("research_iteration", 1)
-    score = source.get("source_score", 0.5)
+    from src.acquisition.source_router import SourceRouter
+    from src.acquisition.http_acquirer import HttpAcquirer
+    from src.acquisition.pdf_acquirer import PdfAcquirer
+    from src.acquisition.playwright_agent import PlaywrightAgent
 
-    if not is_supported_url(url):
-        logger.info(f"Skipping unsupported URL domain: {url}")
-        return None
-
-    try:
-        content: Optional[str] = None
-
-        if url.lower().endswith(".pdf") or "/pdf/" in url.lower():
-            content = scrape_pdf_content(url, timeout=timeout)
-        else:
-            resp = requests.get(url, timeout=timeout, headers=RESEARCH_HEADERS)
-            if resp.status_code == 200:
-                # If the Content-Type header indicates PDF
-                if "application/pdf" in resp.headers.get("Content-Type", "").lower():
-                    content = scrape_pdf_content(url, timeout=timeout)
-                else:
-                    content = scrape_html_content(resp.text)
-
-        if content and len(content) >= 200:
-            truncated = content[:max_chars]
-            return ScrapedDocument(
-                url=url,
-                title=title,
-                content=truncated,
-                search_query=query,
-                research_iteration=iteration,
-                source_score=score,
-                char_count=len(truncated),
-                metadata=source,
-            )
-
-        return None
-
-    except Exception as e:
-        logger.warning(f"Scraping failed for {url}: {e}")
-        return None
+    http_acq = HttpAcquirer(timeout=timeout, requests_get=requests.get)
+    pdf_acq = PdfAcquirer(timeout=timeout)
+    pw_agent = PlaywrightAgent()
+    router = SourceRouter(http_acquirer=http_acq, pdf_acquirer=pdf_acq, playwright_agent=pw_agent)
+    
+    doc, _ = router.route_source(source, max_chars=max_chars, progress_callback=progress_callback)
+    return doc
 
 
 def scrape_sources(
     sources: List[Dict[str, Any]],
     timeout: int = 12,
     max_chars: int = 8000,
+    progress_callback: Optional[Any] = None,
 ) -> Tuple[List[ScrapedDocument], List[Dict[str, Any]]]:
     """
-    Scrapes all accepted sources in sequence.
+    Scrapes all accepted sources in sequence using the SourceRouter.
     Returns:
       (successful_documents, failed_sources)
     Guarantees non-blocking execution: individual errors do not stop remaining sources.
     """
-    documents: List[ScrapedDocument] = []
-    failures: List[Dict[str, Any]] = []
+    from src.acquisition.source_router import SourceRouter
+    from src.acquisition.http_acquirer import HttpAcquirer
+    from src.acquisition.pdf_acquirer import PdfAcquirer
+    from src.acquisition.playwright_agent import PlaywrightAgent
 
-    for src in sources:
-        doc = scrape_single_source(src, timeout=timeout, max_chars=max_chars)
-        if doc is not None:
-            documents.append(doc)
-        else:
-            failures.append(src)
+    http_acq = HttpAcquirer(timeout=timeout, requests_get=requests.get)
+    pdf_acq = PdfAcquirer(timeout=timeout)
+    pw_agent = PlaywrightAgent()
+    router = SourceRouter(http_acquirer=http_acq, pdf_acquirer=pdf_acq, playwright_agent=pw_agent)
 
-    return documents, failures
+    docs, failures, _ = router.acquire_sources(sources, max_chars=max_chars, progress_callback=progress_callback)
+    return docs, failures
 
 
 def scrape_urls(urls: List[str], timeout: int = 12) -> List[str]:
