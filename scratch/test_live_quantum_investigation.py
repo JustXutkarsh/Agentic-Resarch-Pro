@@ -12,6 +12,8 @@ import logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("LiveQuantumValidation")
 
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -111,12 +113,52 @@ def main():
     print(f"  Research Completeness: {result.confidence.research_completeness}")
     print(f"  Explanation: {result.confidence.explanation}")
 
-    # 7. Generate PDF
+    # 7. Generate PDF and verify Unicode rendering
     pdf_out = f"quantum_hardened_{SESSION_ID}.pdf"
     generate_research_pdf(result, output_path=pdf_out)
     if os.path.exists(pdf_out):
         sz = os.path.getsize(pdf_out)
         print(f"\n✅ PDF GENERATED: {pdf_out} ({sz} bytes)")
+
+        # PyMuPDF Visual & Unicode Verification
+        import pymupdf as fitz
+        doc = fitz.open(pdf_out)
+        print(f"PDF Page Count: {len(doc)}")
+        
+        all_pdf_text = ""
+        square_count = 0
+        notdef_count = 0
+
+        for page_idx, page in enumerate(doc):
+            text = page.get_text()
+            all_pdf_text += f"\n--- Page {page_idx+1} ---\n" + text
+            
+            # Count black squares or .notdef code 1
+            page_squares = text.count("■")
+            page_notdefs = text.count("\x01")
+            square_count += page_squares
+            notdef_count += page_notdefs
+
+            # Render page to high-res PNG for visual audit
+            pix = page.get_pixmap(dpi=150)
+            png_path = f"scratch/quantum_page_{page_idx+1}.png"
+            pix.save(png_path)
+            print(f"  Page {page_idx+1}: rendered to {png_path} ({pix.width}x{pix.height}, squares: {page_squares}, notdefs: {page_notdefs})")
+
+        doc.close()
+
+        print(f"\n--- 6. UNICODE & GLYPH INTEGRITY AUDIT ---")
+        print(f"Total '■' square glyphs in PDF: {square_count}")
+        print(f"Total '\\x01' notdef glyphs in PDF: {notdef_count}")
+        
+        assert square_count == 0, f"FAILED: Found {square_count} black square boxes (■) in generated PDF!"
+        assert notdef_count == 0, f"FAILED: Found {notdef_count} unmapped glyphs (\\x01) in generated PDF!"
+        print("✅ ZERO BLACK SQUARES (■): All technical notations, superscripts, and hyphens rendered cleanly.")
+
+        # Check key terms in PDF text
+        for term in ["tolerant", "correction", "qubit"]:
+            found = term.lower() in all_pdf_text.lower()
+            print(f"  Contains '{term}': {found}")
     else:
         print("\n❌ PDF Generation failed.")
 

@@ -200,15 +200,7 @@ def render_results_workspace(result: ResearchResult, pdf_path: Optional[str] = N
                 unsafe_allow_html=True,
             )
     else:
-        st.markdown(
-            render_contradiction_card(
-                topic="Capital Expenditure vs Near-Term Commercialization",
-                arg_a="Aggressive infrastructure buildouts are essential to secure long-term competitive moat and computational leadership.",
-                arg_b="Elevated depreciation rates and uncertain immediate commercial ROI may prompt near-term capital expenditure rationalization.",
-                synthesis="Consensus analysis indicates foundational hyperscalers will sustain infrastructure commitments while downstream application providers face increasing monetization scrutiny.",
-            ),
-            unsafe_allow_html=True,
-        )
+        st.info("No empirical contradictions or substantial factual tensions detected across retrieved literature.")
 
     st.markdown("<div style='margin-top:36px;'></div>", unsafe_allow_html=True)
 

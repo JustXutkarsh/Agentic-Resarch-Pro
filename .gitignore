@@ -13,3 +13,5 @@ research_dossier_*.pdf
 .DS_Store
 .chroma/
 chroma_data/
+scratch/*.png
+scratch/*.pdf

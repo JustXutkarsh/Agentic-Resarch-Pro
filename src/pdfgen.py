@@ -46,28 +46,115 @@ from reportlab.platypus import (
     KeepTogether,
 )
 from reportlab.pdfgen import canvas
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfbase.pdfmetrics import registerFontFamily
 
 logger = logging.getLogger(__name__)
 
+_FONTS_REGISTERED = False
+_RESOLVED_FONTS = ("Helvetica", "Helvetica-Bold", "Helvetica-Oblique", "Courier")
+
+
+def register_unicode_fonts():
+    """
+    Registers the DejaVu font family for complete Unicode coverage (technical notations,
+    superscripts/subscripts, hyphens, and mathematical operators).
+    Falls back gracefully to system Unicode fonts or standard fonts if needed.
+    """
+    global _FONTS_REGISTERED, _RESOLVED_FONTS
+    if _FONTS_REGISTERED:
+        return _RESOLVED_FONTS
+
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    fonts_dir = os.path.join(base_dir, "fonts")
+
+    dejavu_regular = os.path.join(fonts_dir, "DejaVuSans.ttf")
+    dejavu_bold = os.path.join(fonts_dir, "DejaVuSans-Bold.ttf")
+    dejavu_oblique = os.path.join(fonts_dir, "DejaVuSans-Oblique.ttf")
+    dejavu_bold_oblique = os.path.join(fonts_dir, "DejaVuSans-BoldOblique.ttf")
+    dejavu_mono = os.path.join(fonts_dir, "DejaVuSansMono.ttf")
+    dejavu_serif = os.path.join(fonts_dir, "DejaVuSerif.ttf")
+
+    if os.path.exists(dejavu_regular) and os.path.exists(dejavu_bold):
+        try:
+            pdfmetrics.registerFont(TTFont("DejaVuSans", dejavu_regular))
+            pdfmetrics.registerFont(TTFont("DejaVuSans-Bold", dejavu_bold))
+            if os.path.exists(dejavu_oblique):
+                pdfmetrics.registerFont(TTFont("DejaVuSans-Oblique", dejavu_oblique))
+            else:
+                pdfmetrics.registerFont(TTFont("DejaVuSans-Oblique", dejavu_regular))
+
+            if os.path.exists(dejavu_bold_oblique):
+                pdfmetrics.registerFont(TTFont("DejaVuSans-BoldOblique", dejavu_bold_oblique))
+            else:
+                pdfmetrics.registerFont(TTFont("DejaVuSans-BoldOblique", dejavu_bold))
+
+            if os.path.exists(dejavu_mono):
+                pdfmetrics.registerFont(TTFont("DejaVuSansMono", dejavu_mono))
+            else:
+                pdfmetrics.registerFont(TTFont("DejaVuSansMono", dejavu_regular))
+
+            if os.path.exists(dejavu_serif):
+                pdfmetrics.registerFont(TTFont("DejaVuSerif", dejavu_serif))
+
+            registerFontFamily(
+                "DejaVuSans",
+                normal="DejaVuSans",
+                bold="DejaVuSans-Bold",
+                italic="DejaVuSans-Oblique",
+                boldItalic="DejaVuSans-BoldOblique",
+            )
+            _FONTS_REGISTERED = True
+            _RESOLVED_FONTS = ("DejaVuSans", "DejaVuSans-Bold", "DejaVuSans-Oblique", "DejaVuSansMono")
+            logger.info("Successfully registered DejaVu Unicode font family for PDF generation.")
+            return _RESOLVED_FONTS
+        except Exception as e:
+            logger.warning(f"Failed to register bundled DejaVu fonts: {e}")
+
+    # Fallback to system Arial Unicode if available
+    system_arial_unicode = "/System/Library/Fonts/Supplemental/Arial Unicode.ttf"
+    if not os.path.exists(system_arial_unicode):
+        system_arial_unicode = "/Library/Fonts/Arial Unicode.ttf"
+    if os.path.exists(system_arial_unicode):
+        try:
+            pdfmetrics.registerFont(TTFont("ArialUnicode", system_arial_unicode))
+            registerFontFamily("ArialUnicode", normal="ArialUnicode", bold="ArialUnicode", italic="ArialUnicode", boldItalic="ArialUnicode")
+            _FONTS_REGISTERED = True
+            _RESOLVED_FONTS = ("ArialUnicode", "ArialUnicode", "ArialUnicode", "Courier")
+            logger.info("Registered Arial Unicode font as fallback.")
+            return _RESOLVED_FONTS
+        except Exception as e:
+            logger.warning(f"Failed to register Arial Unicode: {e}")
+
+    _FONTS_REGISTERED = True
+    _RESOLVED_FONTS = ("Helvetica", "Helvetica-Bold", "Helvetica-Oblique", "Courier")
+    return _RESOLVED_FONTS
+
 
 def _escape(text: Any) -> str:
-    """Safely escape text for ReportLab Paragraph markup."""
+    """Safely escape text for ReportLab Paragraph markup while preserving Unicode."""
     if text is None:
         return ""
     return str(text).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
-def _format_markdown_for_reportlab(text: str) -> str:
+def _format_markdown_for_reportlab(text: str, mono_font: str = "DejaVuSansMono") -> str:
     """
-    Transforms markdown formatting into safe ReportLab inline XML tags:
-    - **bold** -> <b>bold</b>
-    - *italic* -> <i>italic</i>
-    - `code` -> <font name='Courier'>code</font>
-    - [title](url) -> <a href='url' color='#2563eb'><u>title</u></a>
+    Transforms markdown formatting into safe ReportLab inline XML tags while preserving
+    Unicode technical notation (superscripts, subscripts, Greek/math symbols, hyphens):
+    - Converts HTML entities (&minus;, &times;, &ge;, etc.) to actual Unicode characters
+    - Converts **bold** -> <b>bold</b>
+    - Converts *italic* -> <i>italic</i>
+    - Converts `code` -> <font name='DejaVuSansMono'>code</font>
+    - Converts [title](url) -> <a href='url' color='#2563eb'><u>title</u></a>
     Strips raw markdown syntax so no raw asterisks or hashes leak into the PDF.
     """
     if not text:
         return ""
+
+    # Unescape HTML entities first (&minus; -> −, &times; -> ×, &ge; -> ≥, &ndash; -> –, etc.)
+    text = html.unescape(text)
 
     # First, handle markdown links: [label](url)
     link_pattern = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
@@ -78,15 +165,15 @@ def _format_markdown_for_reportlab(text: str) -> str:
     
     text = link_pattern.sub(link_repl, text)
 
-    # Escape HTML special characters
+    # Escape HTML special characters for ReportLab XML parser
     safe = _escape(text)
 
     # Convert bold: **text** -> <b>text</b>
     safe = re.sub(r"\*\*([^*]+)\*\*", r"<b>\1</b>", safe)
     # Convert italic: *text* -> <i>text</i>
     safe = re.sub(r"\*([^*]+)\*", r"<i>\1</i>", safe)
-    # Convert inline code: `text` -> <font name='Courier'>\1</font>
-    safe = re.sub(r"`([^`]+)`", r"<font name='Courier'>\1</font>", safe)
+    # Convert inline code: `text` -> <font name='mono_font'>\1</font>
+    safe = re.sub(r"`([^`]+)`", rf"<font name='{mono_font}'>\1</font>", safe)
 
     # Restore links
     for idx, (label, url) in enumerate(links):
@@ -105,7 +192,8 @@ def _format_markdown_for_reportlab(text: str) -> str:
 class NumberedCanvas(canvas.Canvas):
     """
     Two-pass canvas that dynamically calculates the total page count
-    and renders a permanent academic running header and footer on every page.
+    and renders a permanent academic running header and footer on every page
+    using Unicode-capable DejaVu fonts.
     """
 
     def __init__(self, *args, **kwargs):
@@ -126,7 +214,8 @@ class NumberedCanvas(canvas.Canvas):
 
     def draw_page_decorations(self, page_count: int):
         self.saveState()
-        self.setFont("Helvetica", 8)
+        font_regular, _, _, _ = register_unicode_fonts()
+        self.setFont(font_regular, 8)
         self.setFillColor(colors.HexColor("#64748b"))
 
         # Header line & title on later pages
@@ -189,9 +278,11 @@ def get_pdf_page_count(pdf_path: str) -> int:
 def generate_research_pdf(result: Any, output_path: str = "research_report.pdf") -> str:
     """
     Generate a comprehensive, publication-grade research dossier PDF.
-    Applies clean editorial styles, strips all raw markdown syntax, and attaches
-    the permanent 'Built by - Utkarsh Pandey' running footer.
+    Applies clean editorial styles, renders full technical Unicode notations natively,
+    strips all raw markdown syntax, and attaches the permanent 'Built by - Utkarsh Pandey' running footer.
     """
+    font_regular, font_bold, font_italic, font_mono = register_unicode_fonts()
+
     doc = SimpleDocTemplate(
         output_path,
         pagesize=letter,
@@ -203,11 +294,11 @@ def generate_research_pdf(result: Any, output_path: str = "research_report.pdf")
 
     styles = getSampleStyleSheet()
 
-    # Academic & Editorial Typography Styles
+    # Academic & Editorial Typography Styles with Unicode DejaVu font
     title_style = ParagraphStyle(
         "DocTitle",
         parent=styles["Heading1"],
-        fontName="Helvetica-Bold",
+        fontName=font_bold,
         fontSize=20,
         leading=24,
         textColor=colors.HexColor("#0f172a"),
@@ -217,7 +308,7 @@ def generate_research_pdf(result: Any, output_path: str = "research_report.pdf")
     subtitle_style = ParagraphStyle(
         "DocSubtitle",
         parent=styles["Normal"],
-        fontName="Helvetica",
+        fontName=font_regular,
         fontSize=10,
         leading=14,
         textColor=colors.HexColor("#475569"),
@@ -227,7 +318,7 @@ def generate_research_pdf(result: Any, output_path: str = "research_report.pdf")
     verdict_title_style = ParagraphStyle(
         "VerdictTitle",
         parent=styles["Normal"],
-        fontName="Helvetica-Bold",
+        fontName=font_bold,
         fontSize=9,
         leading=12,
         textColor=colors.HexColor("#0369a1"),
@@ -237,7 +328,7 @@ def generate_research_pdf(result: Any, output_path: str = "research_report.pdf")
     verdict_text_style = ParagraphStyle(
         "VerdictText",
         parent=styles["Normal"],
-        fontName="Helvetica-Bold",
+        fontName=font_bold,
         fontSize=13,
         leading=17,
         textColor=colors.HexColor("#0f172a"),
@@ -247,7 +338,7 @@ def generate_research_pdf(result: Any, output_path: str = "research_report.pdf")
     h1_style = ParagraphStyle(
         "SectionH1",
         parent=styles["Heading2"],
-        fontName="Helvetica-Bold",
+        fontName=font_bold,
         fontSize=12.5,
         leading=16,
         textColor=colors.HexColor("#0f172a"),
@@ -259,7 +350,7 @@ def generate_research_pdf(result: Any, output_path: str = "research_report.pdf")
     h2_style = ParagraphStyle(
         "SectionH2",
         parent=styles["Heading3"],
-        fontName="Helvetica-Bold",
+        fontName=font_bold,
         fontSize=10.5,
         leading=14,
         textColor=colors.HexColor("#1e293b"),
@@ -271,7 +362,7 @@ def generate_research_pdf(result: Any, output_path: str = "research_report.pdf")
     body_style = ParagraphStyle(
         "Body",
         parent=styles["Normal"],
-        fontName="Helvetica",
+        fontName=font_regular,
         fontSize=9,
         leading=13.5,
         textColor=colors.HexColor("#334155"),
@@ -289,7 +380,7 @@ def generate_research_pdf(result: Any, output_path: str = "research_report.pdf")
     meta_style = ParagraphStyle(
         "Meta",
         parent=styles["Normal"],
-        fontName="Helvetica-Oblique",
+        fontName=font_italic,
         fontSize=8.5,
         leading=11,
         textColor=colors.HexColor("#64748b"),
@@ -321,14 +412,12 @@ def generate_research_pdf(result: Any, output_path: str = "research_report.pdf")
 
     # 2. Executive Verdict & Confidence Callout Box
     conf_score = int(result.confidence.overall_score) if result.confidence else 78
-    if "bubble" in result.topic.lower():
-        verdict_str = "Speculative valuation risk is elevated; long-term infrastructure investment remains resilient."
-    elif conf_score >= 80:
-        verdict_str = "High empirical grounding with broad literature consensus across primary dimensions."
+    if conf_score >= 80:
+        verdict_str = "High empirical grounding with broad literature consensus across primary technical and economic dimensions."
     elif conf_score >= 65:
-        verdict_str = "Substantial empirical evidence identified alongside significant perspective divergence."
+        verdict_str = "Substantial empirical evidence identified alongside notable perspective divergence and ongoing engineering debate."
     else:
-        verdict_str = "Emerging evidence base with ongoing analytical dispute across primary indicators."
+        verdict_str = "Emerging evidence base with analytical uncertainty and active dispute across primary technical indicators."
 
     verdict_data = [
         [
@@ -338,7 +427,7 @@ def generate_research_pdf(result: Any, output_path: str = "research_report.pdf")
         [
             Paragraph(verdict_str, verdict_text_style),
             Paragraph(
-                f"Heuristic grounded in source credibility, multi-perspective coverage, "
+                f"Heuristic grounded in institutional source authority, multi-perspective coverage, "
                 f"and claim verification against empirical literature.",
                 meta_style,
             ),
@@ -346,6 +435,7 @@ def generate_research_pdf(result: Any, output_path: str = "research_report.pdf")
     ]
     verdict_table = Table(verdict_data, colWidths=[340, 180])
     verdict_table.setStyle(TableStyle([
+        ('FONTNAME', (0,0), (-1,-1), font_regular),
         ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#f0f9ff")),
         ('BOX', (0,0), (-1,-1), 1, colors.HexColor("#bae6fd")),
         ('VALIGN', (0,0), (-1,-1), 'TOP'),
@@ -373,23 +463,23 @@ def generate_research_pdf(result: Any, output_path: str = "research_report.pdf")
         if line.startswith("## "):
             section_title = line[3:].strip()
             story.append(Spacer(1, 6))
-            story.append(Paragraph(f"<b>{_format_markdown_for_reportlab(section_title)}</b>", h1_style))
+            story.append(Paragraph(f"<b>{_format_markdown_for_reportlab(section_title, mono_font=font_mono)}</b>", h1_style))
             story.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor("#e2e8f0"), spaceAfter=6))
             continue
 
         if line.startswith("### "):
             sub_title = line[4:].strip()
-            story.append(Paragraph(f"<b>{_format_markdown_for_reportlab(sub_title)}</b>", h2_style))
+            story.append(Paragraph(f"<b>{_format_markdown_for_reportlab(sub_title, mono_font=font_mono)}</b>", h2_style))
             continue
 
         if line.startswith("- ") or line.startswith("• "):
             content = line[2:].strip()
-            formatted = _format_markdown_for_reportlab(content)
+            formatted = _format_markdown_for_reportlab(content, mono_font=font_mono)
             story.append(Paragraph(f"&bull;&nbsp; {formatted}", bullet_style))
             continue
 
         # Regular analytical paragraph
-        formatted = _format_markdown_for_reportlab(line)
+        formatted = _format_markdown_for_reportlab(line, mono_font=font_mono)
         story.append(Paragraph(formatted, body_style))
 
     story.append(Spacer(1, 10))
@@ -412,8 +502,8 @@ def generate_research_pdf(result: Any, output_path: str = "research_report.pdf")
             tier_info = f"Tier {c.authority_tier}" if getattr(c, "authority_tier", None) else ""
             sources_summary = f"{tier_info} • {c.source_count} sources" if tier_info and c.source_count else (tier_info or (f"{c.source_count} sources" if c.source_count else "Indexed Literature"))
             
-            clean_claim = _format_markdown_for_reportlab(c.claim)
-            clean_reason = _format_markdown_for_reportlab(c.reasoning)
+            clean_claim = _format_markdown_for_reportlab(c.claim, mono_font=font_mono)
+            clean_reason = _format_markdown_for_reportlab(c.reasoning, mono_font=font_mono)
 
             claim_rows.append([
                 Paragraph(clean_claim, body_style),
@@ -423,6 +513,8 @@ def generate_research_pdf(result: Any, output_path: str = "research_report.pdf")
 
         claim_table = Table(claim_rows, colWidths=[180, 110, 230])
         claim_table.setStyle(TableStyle([
+            ('FONTNAME', (0,0), (-1,-1), font_regular),
+            ('FONTNAME', (0,0), (-1,0), font_bold),
             ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#f8fafc")),
             ('BOX', (0,0), (-1,-1), 0.5, colors.HexColor("#cbd5e1")),
             ('INNERGRID', (0,0), (-1,-1), 0.5, colors.HexColor("#e2e8f0")),
@@ -441,10 +533,10 @@ def generate_research_pdf(result: Any, output_path: str = "research_report.pdf")
         story.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor("#e2e8f0"), spaceAfter=6))
         
         for idx, contra in enumerate(result.contradictions):
-            clean_topic = _format_markdown_for_reportlab(contra.topic)
-            clean_a = _format_markdown_for_reportlab(contra.perspective_a)
-            clean_b = _format_markdown_for_reportlab(contra.perspective_b)
-            clean_res = _format_markdown_for_reportlab(contra.resolution)
+            clean_topic = _format_markdown_for_reportlab(contra.topic, mono_font=font_mono)
+            clean_a = _format_markdown_for_reportlab(contra.perspective_a, mono_font=font_mono)
+            clean_b = _format_markdown_for_reportlab(contra.perspective_b, mono_font=font_mono)
+            clean_res = _format_markdown_for_reportlab(contra.resolution, mono_font=font_mono)
             dtype = getattr(contra, "divergence_type", "DIRECT_CONTRADICTION").replace("_", " ")
             scope_diff = getattr(contra, "scope_difference", "")
             scope_text = f" <i>(Scope: {scope_diff})</i>" if scope_diff else ""
@@ -465,6 +557,7 @@ def generate_research_pdf(result: Any, output_path: str = "research_report.pdf")
             ]
             contra_table = Table(contra_data, colWidths=[260, 260])
             contra_table.setStyle(TableStyle([
+                ('FONTNAME', (0,0), (-1,-1), font_regular),
                 ('SPAN', (0,0), (1,0)),
                 ('SPAN', (0,2), (1,2)),
                 ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#fefce8")),
