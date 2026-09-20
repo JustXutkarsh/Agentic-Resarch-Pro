@@ -24,7 +24,7 @@ from src.tavily_client import TavilySearch
 from src.source_evaluator import evaluate_and_filter_sources
 from src.scraper import scrape_sources, ScrapedDocument
 from src.acquisition.source_router import SourceRouter
-from src.chunker import chunk_text
+from src.chunker import chunk_text, chunk_document_semantically, EvidenceChunk
 from src.embedder import embed_documents
 from src.chroma_store import get_vector_store, save_vectors, retrieve_relevant_chunks
 from src.gap_detector import ResearchGapDetector, ResearchGap, compute_dimension_coverage
@@ -217,8 +217,11 @@ class ResearchOrchestrator:
             metrics.llm_calls_made += 1
         report_step("PLANNER", 0.15, f"Generated {len(plan.search_queries)} targeted search queries.")
 
-        # Get isolated session vector store
+        # Get isolated session vector store and bind session_id across agents
         vector_store = get_vector_store(session_id)
+        self.summarizer.session_id = session_id
+        self.claim_verifier.session_id = session_id
+        self.contradiction_detector.session_id = session_id
 
         # -------------------------------------------------------------
         # Phase B: Iterative Research Loop
@@ -297,22 +300,42 @@ class ResearchOrchestrator:
                 f"{len(failed_sources)} failed)."
             )
 
-            # 4. Chunking
+            # 4. Chunking (Semantic Table- and Heading-Aware)
             iteration_chunks = []
             iteration_metadatas = []
+            iteration_ids = []
             for doc in docs:
-                raw_chunks = chunk_text(doc.content, chunk_size=1200, overlap=100)
-                acq_method = getattr(doc, "acquisition_method", "http")
-                for chunk in raw_chunks:
-                    iteration_chunks.append(chunk)
-                    iteration_metadatas.append({
+                # Ensure research_session_id is attached to document
+                if not getattr(doc, "research_session_id", ""):
+                    doc.research_session_id = session_id
+
+                doc_semantic_chunks = chunk_document_semantically(
+                    text=doc.content,
+                    document_id=getattr(doc, "document_id", ""),
+                    research_session_id=session_id,
+                    max_chars=1200,
+                    overlap_chars=100,
+                    extra_metadata={
                         "source_url": doc.url,
                         "source_title": doc.title,
                         "search_query": doc.search_query,
                         "source_score": doc.source_score,
                         "research_iteration": iteration,
-                        "acquisition_method": acq_method,
-                    })
+                        "acquisition_method": getattr(doc, "acquisition_method", "http"),
+                        "authority_tier": getattr(doc, "authority_tier", 3),
+                        "source_domain": getattr(doc, "source_domain", ""),
+                        "source_type": getattr(doc, "source_type", "web"),
+                        "publisher": getattr(doc, "publisher", ""),
+                        "research_session_id": session_id,
+                    }
+                )
+                for chunk_obj in doc_semantic_chunks:
+                    iteration_chunks.append(chunk_obj.content)
+                    meta = chunk_obj.metadata
+                    meta["chunk_id"] = chunk_obj.chunk_id
+                    meta["section_heading"] = chunk_obj.section_heading
+                    iteration_metadatas.append(meta)
+                    iteration_ids.append(chunk_obj.chunk_id)
 
             state.chunks.extend(iteration_chunks)
             state.chunk_metadatas.extend(iteration_metadatas)
@@ -322,11 +345,11 @@ class ResearchOrchestrator:
             if iteration_chunks:
                 report_step("EMBEDDER", 0.37 + (iteration - 1) * 0.20, f"Generating Hugging Face embeddings for {len(iteration_chunks)} chunks...")
                 embeddings = embed_documents(iteration_chunks)
-                save_vectors(vector_store, embeddings, iteration_chunks, metadatas=iteration_metadatas)
+                save_vectors(vector_store, embeddings, iteration_chunks, metadatas=iteration_metadatas, ids=iteration_ids)
 
-            # 6. Evidence Retrieval
+            # 6. Evidence Retrieval (Strict Session Isolation)
             report_step("RETRIEVAL", 0.39 + (iteration - 1) * 0.20, "Retrieving evidence passages from vector store...")
-            retrieved = retrieve_relevant_chunks(vector_store, topic, top_k=config.top_k)
+            retrieved = retrieve_relevant_chunks(vector_store, topic, top_k=config.top_k, session_id=session_id)
             state.retrieved_chunks = retrieved
             metrics.retrieved_evidence_chunks = len(retrieved)
 

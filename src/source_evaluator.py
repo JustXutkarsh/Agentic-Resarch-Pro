@@ -22,7 +22,10 @@ from src.hallucination import cosine_similarity
 
 @dataclass
 class SourceEvaluation:
-    """Detailed multi-factor evaluation scores for a source."""
+    """
+    Multi-factor source quality evaluation.
+    Treated as a calibrated source-quality signal rather than mathematical certainty.
+    """
     authority_score: float
     relevance_score: float
     recency_score: float
@@ -31,6 +34,10 @@ class SourceEvaluation:
     overall_score: float
     recency_unknown: bool = False
     explanation: str = ""
+    tier: int = 4  # 1: Peer-reviewed/Gov/Standards, 2: University/Preprint/Corp Tech, 3: Tech Journalism/Industry, 4: Commercial/Blog
+    source_type: str = "commercial_blog"
+    is_corporate_roadmap: bool = False
+    signal_confidence: str = "Moderate"
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -42,58 +49,132 @@ class SourceEvaluation:
             "overall_score": round(self.overall_score, 2),
             "recency_unknown": self.recency_unknown,
             "explanation": self.explanation,
+            "tier": self.tier,
+            "source_type": self.source_type,
+            "is_corporate_roadmap": self.is_corporate_roadmap,
+            "signal_confidence": self.signal_confidence,
         }
 
 
-# Domain heuristic patterns
-HIGH_AUTHORITY_DOMAINS = {
-    ".gov", ".mil", ".edu", ".ac.uk", ".gov.uk", ".gov.in", ".europa.eu"
+# ==============================================================================
+# 4-TIER SOURCE AUTHORITY HIERARCHY (Source-Quality Signal)
+# ==============================================================================
+
+# Tier 1: Peer-reviewed academic literature, Government publications/labs, Official standards bodies
+TIER_1_GOV_LABS = {
+    ".gov", ".mil", ".gov.uk", ".gov.in", ".europa.eu", "nih.gov", "ncbi.nlm.nih.gov",
+    "nist.gov", "energy.gov", "who.int", "cdc.gov", "lanl.gov", "ornl.gov", "sandia.gov"
 }
 
-ESTABLISHED_ACADEMIC_ORGS = {
-    "arxiv.org", "nature.com", "science.org", "sciencedirect.com",
-    "ieee.org", "nih.gov", "ncbi.nlm.nih.gov", "who.int", "cdc.gov",
-    "mit.edu", "stanford.edu", "harvard.edu", "ox.ac.uk", "cam.ac.uk",
-    "springer.com", "wiley.com", "frontiersin.org", "cell.com"
+TIER_1_PEER_REVIEWED = {
+    "nature.com", "science.org", "sciencedirect.com", "ieee.org", "springer.com",
+    "wiley.com", "cell.com", "pnas.org", "aps.org", "acm.org", "iop.org", "oup.com"
 }
 
-REPUTABLE_NEWS_ORGS = {
+TIER_1_STANDARDS_BODIES = {
+    "iso.org", "ietf.org", "w3.org", "itu.int", "bipm.org"
+}
+
+# Tier 2: University/research institution publications, High-quality preprints (arXiv), Official corporate technical research
+TIER_2_UNIVERSITIES = {
+    ".edu", ".ac.uk", "mit.edu", "stanford.edu", "harvard.edu", "ox.ac.uk",
+    "cam.ac.uk", "caltech.edu", "princeton.edu", "uchicago.edu", "berkeley.edu"
+}
+
+TIER_2_PREPRINTS = {
+    "arxiv.org", "biorxiv.org", "medrxiv.org", "chemrxiv.org", "techrxiv.org", "ssrn.com"
+}
+
+TIER_2_CORPORATE_TECHNICAL = {
+    "research.ibm.com", "ibm.com", "research.google", "blog.google/technology",
+    "microsoft.com/en-us/research", "meta.com/research", "amazon.science",
+    "openai.com/research", "anthropic.com/research", "bell-labs.com", "intel.com/research"
+}
+
+# Tier 3: Reputable technical journalism, Established industry publications
+TIER_3_TECH_JOURNALISM = {
+    "technologyreview.com", "arstechnica.com", "ieeespectrum.org", "quantamagazine.org",
+    "wired.com", "spectrum.ieee.org"
+}
+
+TIER_3_INDUSTRY_NEWS = {
     "reuters.com", "bloomberg.com", "apnews.com", "ft.com", "wsj.com",
-    "bbc.com", "nytimes.com", "technologyreview.com", "economist.com"
+    "bbc.com", "nytimes.com", "economist.com"
 }
 
 
-def evaluate_authority_and_reputation(url: str) -> Tuple[float, float, str]:
+def evaluate_authority_and_reputation(url: str, detailed: bool = False):
     """
-    Score authority and institutional reputation based on domain patterns.
-    Returns (authority_score, reputation_score, label).
+    Evaluates authority and institutional reputation based on 4-tier hierarchy.
+    Treats authority as a source-quality signal, not an immutable truth.
+    If detailed=True, returns: (authority_score, reputation_score, label, tier, source_type, is_corporate_roadmap)
+    If detailed=False (default for backward-compatibility): returns: (authority_score, reputation_score, label)
     """
     try:
         domain = urlparse(url).netloc.lower()
+        path = urlparse(url).path.lower()
     except Exception:
         domain = ""
+        path = ""
 
-    # Check top-level domain
-    for suffix in HIGH_AUTHORITY_DOMAINS:
-        if domain.endswith(suffix):
-            return 0.95, 0.95, "Official Government / Academic Domain"
+    # Flag corporate roadmaps / announcements
+    is_roadmap = any(kw in f"{domain}{path}" for kw in ["roadmap", "announcement", "press-release", "newsroom"])
 
-    # Check known scientific/academic institutions
-    for org in ESTABLISHED_ACADEMIC_ORGS:
-        if org in domain:
-            return 0.92, 0.95, "Peer-Reviewed / Academic Publication"
+    def _pack(auth, rep, lbl, tr, st, rm):
+        if detailed:
+            return auth, rep, lbl, tr, st, rm
+        return auth, rep, lbl
 
-    # Check major news organizations
-    for news in REPUTABLE_NEWS_ORGS:
+    # -------------------------------------------------------------
+    # TIER 1: Peer-reviewed literature, Government labs, Standards
+    # -------------------------------------------------------------
+    for gov in TIER_1_GOV_LABS:
+        if domain.endswith(gov) or gov in domain:
+            return _pack(0.95, 0.95, "Tier 1: Government Lab / Official Body", 1, "government_lab", False)
+
+    for peer in TIER_1_PEER_REVIEWED:
+        if peer in domain:
+            return _pack(0.95, 0.95, "Tier 1: Peer-Reviewed Academic Literature", 1, "peer_reviewed_literature", False)
+
+    for std in TIER_1_STANDARDS_BODIES:
+        if std in domain:
+            return _pack(0.95, 0.95, "Tier 1: Official Standards Body", 1, "standards_body", False)
+
+    # -------------------------------------------------------------
+    # TIER 2: Universities, High-Quality Preprints (arXiv), Corporate Tech
+    # -------------------------------------------------------------
+    for edu in TIER_2_UNIVERSITIES:
+        if domain.endswith(edu) or edu in domain:
+            return _pack(0.90, 0.92, "Tier 2: University / Research Institution", 2, "university_research", False)
+
+    for prep in TIER_2_PREPRINTS:
+        if prep in domain:
+            return _pack(0.85, 0.88, "Tier 2: High-Quality Preprint (arXiv/bioRxiv)", 2, "academic_preprint", False)
+
+    for corp in TIER_2_CORPORATE_TECHNICAL:
+        if corp in domain:
+            label = "Tier 2: Corporate Technical Roadmap" if is_roadmap else "Tier 2: Official Corporate Technical Research"
+            return _pack(0.82, 0.85, label, 2, "corporate_technical_publication", is_roadmap)
+
+    # -------------------------------------------------------------
+    # TIER 3: Technical Journalism & Established Industry Publications
+    # -------------------------------------------------------------
+    for tech_j in TIER_3_TECH_JOURNALISM:
+        if tech_j in domain:
+            return _pack(0.80, 0.85, "Tier 3: Reputable Technical Journalism", 3, "technical_journalism", False)
+
+    for news in TIER_3_INDUSTRY_NEWS:
         if news in domain:
-            return 0.80, 0.85, "Recognized Journalism / News Organization"
+            return _pack(0.80, 0.85, "Tier 3: Established Industry Publication", 3, "industry_publication", False)
 
-    # Standard commercial / organization domain
     if domain.endswith(".org"):
-        return 0.70, 0.70, "Established Non-Profit / Organization"
+        return _pack(0.70, 0.72, "Tier 3: Established Non-Profit Organization", 3, "industry_publication", False)
 
-    # Default commercial domain
-    return 0.55, 0.55, "General Web Publisher"
+    # -------------------------------------------------------------
+    # TIER 4: Commercial Blogs, Marketing Content, Low-Authority Secondary
+    # -------------------------------------------------------------
+    return _pack(0.50, 0.50, "Tier 4: Commercial / Secondary Source", 4, "commercial_blog", is_roadmap)
+
 
 
 def evaluate_recency(published_date: Optional[str]) -> Tuple[float, bool]:
@@ -165,8 +246,8 @@ def evaluate_source(
     snippet = source.get("snippet", "")
     published_date = source.get("published_date")
 
-    # 1. Authority and Reputation
-    auth_score, rep_score, label = evaluate_authority_and_reputation(url)
+    # 1. Authority and Reputation with 4-tier calibration
+    auth_score, rep_score, label, tier, source_type, is_roadmap = evaluate_authority_and_reputation(url, detailed=True)
 
     # 2. Semantic Relevance (using Hugging Face embeddings)
     if topic_embedding is None:
@@ -195,6 +276,13 @@ def evaluate_source(
 
     explanation = f"{label} (Relevance: {int(relevance_score*100)}%, Quality: {int(evidence_quality*100)}%)"
 
+    signal_confidence = (
+        "Tier 1: High Signal (Peer-Reviewed / Gov / Standards)" if tier == 1 else
+        "Tier 2: High Signal (University / Preprint / Corp Tech)" if tier == 2 else
+        "Tier 3: Moderate Signal (Tech Journalism / Industry)" if tier == 3 else
+        "Tier 4: Secondary Signal (Commercial / Blog)"
+    )
+
     return SourceEvaluation(
         authority_score=auth_score,
         relevance_score=relevance_score,
@@ -204,6 +292,10 @@ def evaluate_source(
         overall_score=overall_score,
         recency_unknown=recency_unknown,
         explanation=explanation,
+        tier=tier,
+        source_type=source_type,
+        is_corporate_roadmap=is_roadmap,
+        signal_confidence=signal_confidence,
     )
 
 
@@ -228,6 +320,10 @@ def evaluate_and_filter_sources(
         src_with_eval = dict(src)
         src_with_eval["evaluation"] = evaluation.to_dict()
         src_with_eval["source_score"] = evaluation.overall_score
+        src_with_eval["tier"] = evaluation.tier
+        src_with_eval["source_type"] = evaluation.source_type
+        src_with_eval["is_corporate_roadmap"] = evaluation.is_corporate_roadmap
+        src_with_eval["signal_confidence"] = evaluation.signal_confidence
         evaluated_sources.append(src_with_eval)
 
     # Sort descending by priority score

@@ -409,7 +409,8 @@ def generate_research_pdf(result: Any, output_path: str = "research_report.pdf")
         for c in result.claims[:8]:
             label = c.support_label
             label_color = "#16a34a" if "strongly" in label.lower() or label == "Supported" else "#d97706" if "partially" in label.lower() else "#dc2626"
-            sources_summary = f"{c.source_count} sources" if c.source_count else "Indexed Literature"
+            tier_info = f"Tier {c.authority_tier}" if getattr(c, "authority_tier", None) else ""
+            sources_summary = f"{tier_info} • {c.source_count} sources" if tier_info and c.source_count else (tier_info or (f"{c.source_count} sources" if c.source_count else "Indexed Literature"))
             
             clean_claim = _format_markdown_for_reportlab(c.claim)
             clean_reason = _format_markdown_for_reportlab(c.reasoning)
@@ -434,7 +435,7 @@ def generate_research_pdf(result: Any, output_path: str = "research_report.pdf")
         story.append(claim_table)
         story.append(Spacer(1, 10))
 
-    # 5. Where Evidence Disagrees (Empirical Contradictions)
+    # 5. Where Evidence Disagrees (Empirical Contradictions & Divergences)
     if result.contradictions:
         story.append(Paragraph("<b>Empirical Contradictions & Divergent Perspectives</b>", h1_style))
         story.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor("#e2e8f0"), spaceAfter=6))
@@ -444,18 +445,21 @@ def generate_research_pdf(result: Any, output_path: str = "research_report.pdf")
             clean_a = _format_markdown_for_reportlab(contra.perspective_a)
             clean_b = _format_markdown_for_reportlab(contra.perspective_b)
             clean_res = _format_markdown_for_reportlab(contra.resolution)
+            dtype = getattr(contra, "divergence_type", "DIRECT_CONTRADICTION").replace("_", " ")
+            scope_diff = getattr(contra, "scope_difference", "")
+            scope_text = f" <i>(Scope: {scope_diff})</i>" if scope_diff else ""
 
             contra_data = [
                 [
-                    Paragraph(f"<b>Issue {idx+1}: {clean_topic}</b>", h2_style),
+                    Paragraph(f"<b>Issue {idx+1}: {clean_topic}</b> — <font color='#475569'>[{dtype}]</font>{scope_text}", h2_style),
                     Paragraph("", h2_style),
                 ],
                 [
-                    Paragraph(f"<b>Optimistic / Growth Perspective:</b><br/>{clean_a}", callout_style),
-                    Paragraph(f"<b>Skeptical / Downside Perspective:</b><br/>{clean_b}", callout_style),
+                    Paragraph(f"<b>Perspective A:</b><br/>{clean_a}", callout_style),
+                    Paragraph(f"<b>Perspective B:</b><br/>{clean_b}", callout_style),
                 ],
                 [
-                    Paragraph(f"<b>Why This Matters:</b> {clean_res}", callout_style),
+                    Paragraph(f"<b>Analytical Reconciliation:</b> {clean_res}", callout_style),
                     Paragraph("", callout_style),
                 ],
             ]
@@ -486,13 +490,15 @@ def generate_research_pdf(result: Any, output_path: str = "research_report.pdf")
             url = src.get("url", "")
             title = _escape(src.get("title") or url)
             domain = url.split("//")[-1].split("/")[0].replace("www.", "")
+            tier = src.get("tier", 3)
+            src_type = src.get("source_type", "web").replace("_", " ").title()
             score = int(src.get("source_score", 0.7) * 100)
             
             ref_text = (
                 f"[{idx+1}] <b>{title}</b>. "
-                f"<i>{domain}</i>. "
+                f"<i>{domain}</i> • <font color='#475569'>Tier {tier} ({src_type})</font>. "
                 f"<a href='{_escape(url)}' color='#2563eb'><u>Link</u></a> "
-                f"(Authority: {score}%)"
+                f"(Quality Signal: {score}%)"
             )
             story.append(Paragraph(ref_text, bullet_style))
 

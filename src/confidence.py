@@ -105,9 +105,21 @@ def calculate_research_confidence(
         claim_support = 70.0
 
     # 4. Source Agreement (15%)
-    # Deduct 12 points per contradiction, bounded between 40.0 and 100.0
-    contradiction_count = len(contradictions)
-    source_agreement = max(40.0, 100.0 - (contradiction_count * 12.0))
+    # Calibrated penalty: only DIRECT_CONTRADICTION heavily penalizes agreement.
+    # DIFFERENT_SCOPE and DIFFERENT_TIMEFRAME do not penalize agreement.
+    penalty = 0.0
+    for c in contradictions:
+        dtype = getattr(c, "divergence_type", "DIRECT_CONTRADICTION")
+        if dtype == "DIRECT_CONTRADICTION":
+            penalty += 12.0
+        elif dtype == "PARTIAL_TENSION":
+            penalty += 4.0
+        elif dtype in ["DIFFERENT_SCOPE", "DIFFERENT_TIMEFRAME", "DIFFERENT_DEFINITION"]:
+            penalty += 0.0
+        else:
+            penalty += 6.0
+
+    source_agreement = max(40.0, 100.0 - penalty)
 
     # 5. Research Completeness (15%)
     iter_ratio = min(1.0, iterations_completed / max(1, max_iterations))

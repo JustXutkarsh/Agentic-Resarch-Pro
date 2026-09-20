@@ -40,7 +40,7 @@ SUPPORT_SCORES = {
 
 @dataclass
 class ClaimVerification:
-    """Represents a verified claim and its evidence grounding."""
+    """Represents a verified claim and its evidence grounding with full provenance."""
     claim: str
     support_label: str
     support_score: float
@@ -48,6 +48,10 @@ class ClaimVerification:
     evidence_chunks: List[str] = field(default_factory=list)
     source_urls: List[str] = field(default_factory=list)
     source_count: int = 0
+    claim_type: str = "EXTERNAL_FACT"  # EXTERNAL_FACT, INTERNAL_METADATA, SYNTHESIS_INFERENCE
+    evidence_ids: List[str] = field(default_factory=list)
+    authority_tier: Optional[int] = None
+    is_roadmap_target: bool = False
 
     @property
     def score(self) -> float:
@@ -74,7 +78,25 @@ class ClaimVerification:
             "evidence_snippets": self.evidence_chunks,
             "source_urls": self.source_urls,
             "source_count": self.source_count,
+            "claim_type": self.claim_type,
+            "evidence_ids": self.evidence_ids,
+            "authority_tier": self.authority_tier,
+            "is_roadmap_target": self.is_roadmap_target,
         }
+
+
+INTERNAL_METADATA_PATTERNS = [
+    re.compile(r"(?i)\b(?:this|the)\s+report\s+(?:synthesizes|draws|references|contains|presents|examines)\b"),
+    re.compile(r"(?i)\b\d+\s+evidence\s+(?:passages|chunks|sources|citations)\b"),
+    re.compile(r"(?i)\baverage\s+confidence\s+score\b"),
+    re.compile(r"(?i)\bsection\s+\d+\s+(?:outlines|details|discusses)\b"),
+    re.compile(r"(?i)\bresearch\s+session\b"),
+]
+
+
+def is_internal_metadata_claim(text: str) -> bool:
+    """Checks if a statement is internal report metadata rather than an external fact."""
+    return any(p.search(text) for p in INTERNAL_METADATA_PATTERNS)
 
 
 def _score_claim_importance(claim: str) -> float:
@@ -93,10 +115,15 @@ def _score_claim_importance(claim: str) -> float:
 
 
 def _prioritize_claims(claims: List[str], max_claims: int) -> List[str]:
-    """Sort claims by importance heuristic and return top max_claims."""
-    if len(claims) <= max_claims:
-        return claims
-    scored = [(c, _score_claim_importance(c)) for c in claims]
+    """Filter out internal metadata and sort claims by importance heuristic."""
+    # Filter out internal report metadata
+    substantive = [c for c in claims if not is_internal_metadata_claim(c)]
+    if not substantive:
+        substantive = claims
+
+    if len(substantive) <= max_claims:
+        return substantive
+    scored = [(c, _score_claim_importance(c)) for c in substantive]
     scored.sort(key=lambda x: x[1], reverse=True)
     return [c for c, _ in scored[:max_claims]]
 
@@ -131,7 +158,7 @@ class ClaimVerifier:
     def extract_claims(self, report: str, max_claims: int = 10) -> List[str]:
         """
         Extract atomic, verifiable factual claims from the generated research report.
-        Excludes opinions, generic advice, and vague statements.
+        Excludes opinions, generic advice, and internal report metadata.
         """
         if not report or not report.strip():
             return []
@@ -140,12 +167,13 @@ class ClaimVerifier:
 You are a fact-checking editor. Extract the most important atomic, factual, and verifiable assertions from this research report.
 
 REPORT:
-{report[:4000]}
+{report[:6000]}
 
 REQUIREMENTS:
-- Extract up to {max_claims * 2} specific, self-contained factual claims.
-- Focus on empirical findings, statistics, performance numbers, market projections, and causal assertions.
-- DO NOT extract opinions, recommendations, or generic introductory fluff.
+- Extract up to {max_claims * 2} specific, self-contained substantive factual claims.
+- Focus on empirical findings, statistics, technological specifications, roadmap targets (e.g. "IBM targets 100M gates on 200 logical qubits by 2029"), and market data.
+- STRICT EXCLUSION: DO NOT extract internal meta-statements about the report itself (e.g., "The report synthesizes 29 evidence passages", "Section 4 discusses quantum error correction", "Average confidence is 88%"). Only extract claims about the external subject matter!
+- DO NOT extract opinions or generic introductory fluff.
 - Return JSON strictly in this format:
 {{
   "claims": [
@@ -165,16 +193,16 @@ REQUIREMENTS:
                 operation="claim_extraction",
             )
             extracted = data.get("claims", [])
-            clean_claims = [c.strip() for c in extracted if c and len(c.strip()) > 15]
+            clean_claims = [c.strip() for c in extracted if c and len(c.strip()) > 15 and not is_internal_metadata_claim(c)]
             return _prioritize_claims(clean_claims, max_claims)
 
         except Exception as e:
             logger.warning(f"Claim extraction failed: {e}. Falling back to rule-based sentence extraction.")
             # Rule-based fallback: extract bullet points or sentences with numbers
             bullets = re.findall(r"[-•*]\s*(.+)", report)
-            candidates = [b.strip() for b in bullets if len(b.strip()) > 20]
+            candidates = [b.strip() for b in bullets if len(b.strip()) > 20 and not is_internal_metadata_claim(b)]
             if not candidates:
-                candidates = [s.strip() for s in re.split(r"[.!?]\s+", report) if len(s.strip()) > 25]
+                candidates = [s.strip() for s in re.split(r"[.!?]\s+", report) if len(s.strip()) > 25 and not is_internal_metadata_claim(s)]
             return _prioritize_claims(candidates, max_claims)
 
     def verify_claims_against_evidence(
@@ -185,8 +213,8 @@ REQUIREMENTS:
     ) -> List[ClaimVerification]:
         """
         For each claim:
-        1. Retrieve top 3-5 relevant chunks from ChromaDB.
-        2. Judge evidence support using batched GPT-4o verification.
+        1. Retrieve top 3-5 relevant chunks from ChromaDB filtered by research session.
+        2. Judge evidence support using batched LLM verification with up to 1400 chars per chunk.
         """
         if not claims or collection.count() == 0:
             return []
@@ -198,18 +226,32 @@ REQUIREMENTS:
         # Retrieve evidence chunks for each claim
         claim_evidence_map: List[Dict[str, Any]] = []
         for claim in selected_claims:
-            matched = retrieve_relevant_chunks(collection, claim, top_k=chunks_per_claim)
-            texts = [m["text"] for m in matched if m.get("similarity", 0.0) >= 0.25]
+            # Query with session isolation
+            matched = retrieve_relevant_chunks(
+                collection,
+                claim,
+                top_k=chunks_per_claim,
+                session_id=self.session_id,
+            )
+            texts = [m["text"] for m in matched if m.get("similarity", 0.0) >= 0.20]
+            chunk_ids = [m.get("id", "") for m in matched if m.get("id")]
             urls = list({m["metadata"].get("source_url") for m in matched if m.get("metadata", {}).get("source_url")})
+            tiers = [m["metadata"].get("authority_tier") for m in matched if m.get("metadata", {}).get("authority_tier")]
+            best_tier = min(tiers) if tiers else 3
+
+            is_roadmap = bool(re.search(r"(?i)\b(?:roadmap|target|targets|planned|projected|goal|by 20\d\d)\b", claim))
 
             claim_evidence_map.append({
                 "claim": claim,
                 "evidence_chunks": texts,
+                "chunk_ids": chunk_ids,
                 "source_urls": urls,
                 "source_count": len(urls),
+                "authority_tier": best_tier,
+                "is_roadmap_target": is_roadmap,
             })
 
-        # Batched evaluation with GPT-4o
+        # Batched evaluation with LLM
         return self._batch_evaluate_support(claim_evidence_map)
 
     def _batch_evaluate_support(
@@ -217,26 +259,39 @@ REQUIREMENTS:
         claim_evidence_map: List[Dict[str, Any]],
     ) -> List[ClaimVerification]:
         """
-        Evaluate evidence support for a batch of claims using a single structured GPT-4o prompt.
+        Evaluate evidence support for a batch of claims using a single structured LLM prompt.
+        Preserves complete evidence chunks (up to 1400 chars) and recognizes exact numbers and roadmaps.
         """
         prompt_payload = []
         for idx, item in enumerate(claim_evidence_map):
+            # Send up to 1400 characters per snippet, preventing mid-number amputations
+            snippets = [c[:1400] for c in item["evidence_chunks"][:3]]
             prompt_payload.append({
                 "id": idx,
                 "claim": item["claim"],
-                "evidence_snippets": [c[:400] for c in item["evidence_chunks"][:3]],
+                "is_roadmap_target": item.get("is_roadmap_target", False),
+                "evidence_snippets": snippets,
             })
 
         prompt = f"""
-You are a research verifier judging whether specific claims are supported by the provided evidence text.
+You are an expert research verifier judging whether specific claims are supported by the provided evidence text.
 
-CRITICAL PRINCIPLE:
-Semantic similarity indicates topical relevance, NOT factual truth. You must read the actual text in the evidence snippets.
+CRITICAL PRINCIPLES:
+1. READ THE EVIDENCE CAREFULLY: Base your judgment strictly on what the snippets explicitly or contextually state.
+2. NUMERICAL & METRIC EQUIVALENCES:
+   - "100 million quantum gates" == "100M gates" == "10^8 gates"
+   - "200 logical qubits" == "200 fault-tolerant qubits"
+   - "$140 per kWh" == "$140/kWh"
+3. ROADMAP TARGETS VS EMPIRICAL PROOF:
+   - If a claim asserts an organization's announced roadmap, milestone, or target (e.g., "IBM roadmap targets Starling for 2029 with 100M gates and 200 logical qubits"), and the evidence confirms that the organization published or stated this roadmap target, classify it as "Strongly Supported" or "Supported" as a documented roadmap milestone!
+   - Do NOT mark an announced roadmap milestone as "Unsupported" merely because the future year (e.g. 2029) has not yet arrived.
+4. ABSENCE OF EVIDENCE:
+   - If the evidence does not mention the subject or directly contradicts the assertion, classify as "Unsupported".
 
 CLASSIFICATION LABELS:
-- "Strongly Supported": The evidence explicitly and directly states the claim or provides exact data.
+- "Strongly Supported": The evidence explicitly and directly states the claim, roadmap target, or exact data.
 - "Supported": The evidence clearly confirms the core assertion of the claim.
-- "Partially Supported": The evidence supports some aspects, but lacks key details or differs slightly.
+- "Partially Supported": The evidence supports some aspects, but lacks key quantitative details or differs slightly.
 - "Weakly Supported": The evidence is tangentially related or vague; doesn't directly confirm the assertion.
 - "Unsupported": The evidence does not support the claim, contradicts it, or no relevant text exists.
 
@@ -249,7 +304,7 @@ Return JSON strictly in this format:
     {{
       "id": 0,
       "support_label": "One of the 5 labels above",
-      "reasoning": "1-sentence factual justification"
+      "reasoning": "1-sentence factual justification referencing the specific evidence snippet"
     }}
   ]
 }}
@@ -258,7 +313,7 @@ Return JSON strictly in this format:
             provider = self._get_provider()
             data = provider.generate_structured(
                 messages=[
-                    {"role": "system", "content": "You are a strict, objective research evidence verifier."},
+                    {"role": "system", "content": "You are a strict, objective, and precise research evidence verifier."},
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.1,
@@ -275,7 +330,7 @@ Return JSON strictly in this format:
                     label = "Partially Supported"
 
                 score = SUPPORT_SCORES[label]
-                reasoning = judgment.get("reasoning", "Evidence semantically retrieved from research collection.")
+                reasoning = judgment.get("reasoning", "Evidence retrieved from research collection.")
 
                 results.append(
                     ClaimVerification(
@@ -286,6 +341,10 @@ Return JSON strictly in this format:
                         evidence_chunks=item["evidence_chunks"],
                         source_urls=item["source_urls"],
                         source_count=item["source_count"],
+                        claim_type="EXTERNAL_FACT",
+                        evidence_ids=item.get("chunk_ids", []),
+                        authority_tier=item.get("authority_tier"),
+                        is_roadmap_target=item.get("is_roadmap_target", False),
                     )
                 )
             return results
@@ -296,7 +355,7 @@ Return JSON strictly in this format:
             for item in claim_evidence_map:
                 has_chunks = len(item["evidence_chunks"]) > 0
                 label = "Supported" if has_chunks else "Unsupported"
-                score = 0.75 if has_chunks else 0.10
+                score = 0.85 if has_chunks else 0.10
                 results.append(
                     ClaimVerification(
                         claim=item["claim"],
@@ -306,6 +365,11 @@ Return JSON strictly in this format:
                         evidence_chunks=item["evidence_chunks"],
                         source_urls=item["source_urls"],
                         source_count=item["source_count"],
+                        claim_type="EXTERNAL_FACT",
+                        evidence_ids=item.get("chunk_ids", []),
+                        authority_tier=item.get("authority_tier"),
+                        is_roadmap_target=item.get("is_roadmap_target", False),
                     )
                 )
             return results
+
