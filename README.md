@@ -132,6 +132,37 @@ flowchart TD
     PDFGen --> FinalOutput([Interactive Publication Dossier & Verified PDF Export])
 ```
 
+### 🕸️ Interactive Autonomous Investigation Topology (React Flow v12)
+
+The presentation layer includes an interactive 9-node directed graph (`frontend/src/components/AgenticHeroGraph.tsx`) illustrating the active multi-agent pipeline during research execution:
+
+```text
+                      [ Query Formulation ] (QUESTION)
+                                 │
+         ┌───────────────────────┼───────────────────────┐
+         ▼                       ▼                       ▼
+  [ Economic Impact ]   [ Technical Depth ]   [ Historical Precedent ] (ANGLES 1–3)
+         │                       │                       │
+         ▼                       ▼                       ▼
+  [ Tavily Sources ] ──► [ Playwright Agent ] ──► [ ChromaDB Vectors ] (EVIDENCE TIER)
+         │                       │                       │
+         └───────────────────────┼───────────────────────┘
+                                 ▼
+                     [ Claim Verification ] (VERIFY)
+                                 │
+                                 ▼
+                    [ Synthesized Dossier ] (INSIGHT)
+```
+
+#### Node Roles & State Telemetry:
+* **Query Formulation (`QUESTION`)**: Root inquiry decomposition and hypothesis formulation.
+* **Dimensional Angles (`ANGLE 1–3`)**: Multi-perspective query expansion spanning technical, economic, and historical dimensions.
+* **Tavily Sources (`SOURCES`)**: Real-time web perception discovering high-authority primary and academic literature.
+* **Playwright Agent (`PLAYWRIGHT`)**: Autonomous read-only Chromium browser agent extracting client-rendered DOM content, parsing tabular datasets into Markdown, and expanding hidden accordion sections.
+* **ChromaDB Vectors (`EVIDENCE`)**: Session-isolated dense vector space indexing 384-dimensional chunk embeddings.
+* **Claim Verification (`VERIFY`)**: Natural Language Inference (NLI) engine scoring candidate claims against retrieved evidence into 5 distinct grounding tiers.
+* **Synthesized Dossier (`INSIGHT`)**: Structured multi-section executive report with citations, confidence analytics, and publication PDF export.
+
 ---
 
 ## ⚡ Technology Stack: Separation of Concerns
@@ -317,7 +348,7 @@ Agentic-Resarch-Pro/
 │   └── src/
 │       ├── App.tsx                    # Top-level screen coordinator
 │       ├── components/
-│       │   ├── AgenticHeroGraph.tsx   # Interactive 5-tier multi-agent topology
+│       │   ├── AgenticHeroGraph.tsx   # Interactive 9-node multi-agent topology (Playwright integration)
 │       │   ├── ResearchComposer.tsx   # Command surface with depth selector
 │       │   ├── LiveResearchTrail.tsx  # Wall-clock live timeline & event feed
 │       │   ├── ContinuousDossierView.tsx # Publication dossier & claim matrix
