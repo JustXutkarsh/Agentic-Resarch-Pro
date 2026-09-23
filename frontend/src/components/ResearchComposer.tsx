@@ -94,8 +94,8 @@ export const ResearchComposer: React.FC<ResearchComposerProps> = ({
               onKeyDown={(e) => e.key === 'Enter' && setDepth('QUICK')}
               className={`relative p-3.5 sm:p-4 rounded-xl border transition-all duration-200 cursor-pointer text-left select-none min-h-[84px] ${
                 depth === 'QUICK'
-                  ? 'bg-white border-research-blue shadow-card ring-1 ring-research-blue'
-                  : 'bg-research-paper/70 border-research-border hover:border-research-border hover:bg-white shadow-subtle'
+                  ? 'bg-research-paper border-research-blue shadow-card ring-1 ring-research-blue'
+                  : 'bg-research-paper/70 border-research-border hover:border-research-border hover:bg-research-paper shadow-subtle'
               }`}
             >
               <div className="flex items-center justify-between mb-2">
@@ -133,8 +133,8 @@ export const ResearchComposer: React.FC<ResearchComposerProps> = ({
               onKeyDown={(e) => e.key === 'Enter' && setDepth('STANDARD')}
               className={`relative p-3.5 sm:p-4 rounded-xl border transition-all duration-200 cursor-pointer text-left select-none min-h-[84px] ${
                 depth === 'STANDARD'
-                  ? 'bg-white border-research-blue shadow-card ring-1 ring-research-blue'
-                  : 'bg-research-paper/70 border-research-border hover:border-research-border hover:bg-white shadow-subtle'
+                  ? 'bg-research-paper border-research-blue shadow-card ring-1 ring-research-blue'
+                  : 'bg-research-paper/70 border-research-border hover:border-research-border hover:bg-research-paper shadow-subtle'
               }`}
             >
               {/* Floating Recommended Badge */}
@@ -177,8 +177,8 @@ export const ResearchComposer: React.FC<ResearchComposerProps> = ({
               onKeyDown={(e) => e.key === 'Enter' && setDepth('DEEP')}
               className={`relative p-3.5 sm:p-4 rounded-xl border transition-all duration-200 cursor-pointer text-left select-none min-h-[84px] ${
                 depth === 'DEEP'
-                  ? 'bg-white border-research-blue shadow-card ring-1 ring-research-blue'
-                  : 'bg-research-paper/70 border-research-border hover:border-research-border hover:bg-white shadow-subtle'
+                  ? 'bg-research-paper border-research-blue shadow-card ring-1 ring-research-blue'
+                  : 'bg-research-paper/70 border-research-border hover:border-research-border hover:bg-research-paper shadow-subtle'
               }`}
             >
               <div className="flex items-center justify-between mb-2">
@@ -224,7 +224,7 @@ export const ResearchComposer: React.FC<ResearchComposerProps> = ({
           <button
             type="submit"
             disabled={!topic.trim() || disabled}
-            className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-research-primary text-white font-sans text-sm font-bold tracking-wide flex items-center justify-center gap-2 shadow-md hover:bg-black hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 transition-all duration-200 min-h-[48px]"
+            className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-research-primary text-white dark:bg-white dark:text-[#101114] font-sans text-sm font-bold tracking-wide flex items-center justify-center gap-2 shadow-md hover:bg-black dark:hover:bg-gray-100 hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 transition-all duration-200 min-h-[48px]"
           >
             <span>BEGIN RESEARCH</span>
             <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />

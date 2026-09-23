@@ -53,25 +53,25 @@ export const WhyDifferentModal: React.FC<WhyDifferentModalProps> = ({
                 Single query pass, accepting top ranking results without verification or gap analysis.
               </p>
               <div className="space-y-1.5 sm:space-y-2 font-mono text-xs text-research-secondary">
-                <div className="p-2 rounded bg-white border border-research-borderLight text-center break-words">
+                <div className="p-2 rounded bg-research-paper border border-research-borderLight text-center break-words">
                   Search Query
                 </div>
                 <div className="flex justify-center text-research-muted">
                   <ArrowDown className="w-3.5 h-3.5" />
                 </div>
-                <div className="p-2 rounded bg-white border border-research-borderLight text-center break-words">
+                <div className="p-2 rounded bg-research-paper border border-research-borderLight text-center break-words">
                   Read First Few Links
                 </div>
                 <div className="flex justify-center text-research-muted">
                   <ArrowDown className="w-3.5 h-3.5" />
                 </div>
-                <div className="p-2 rounded bg-white border border-research-borderLight text-center break-words">
+                <div className="p-2 rounded bg-research-paper border border-research-borderLight text-center break-words">
                   Select Convenient Information
                 </div>
                 <div className="flex justify-center text-research-muted">
                   <ArrowDown className="w-3.5 h-3.5" />
                 </div>
-                <div className="p-2 rounded bg-white border border-research-borderLight text-center break-words">
+                <div className="p-2 rounded bg-research-paper border border-research-borderLight text-center break-words">
                   Output Static Summary
                 </div>
               </div>
@@ -89,37 +89,37 @@ export const WhyDifferentModal: React.FC<WhyDifferentModalProps> = ({
                 Iterative hypothesis testing, multi-angle vector retrieval, contradiction detection, and claim grounding.
               </p>
               <div className="space-y-1.5 font-mono text-[10px] sm:text-[11px] text-research-primary">
-                <div className="p-1.5 rounded bg-white border border-research-blue/20 text-center font-medium break-words">
+                <div className="p-1.5 rounded bg-research-paper border border-research-blue/20 text-center font-medium break-words">
                   1. Formulate Multi-Perspective Plan
                 </div>
                 <div className="flex justify-center text-research-blue">
                   <ArrowDown className="w-3 h-3" />
                 </div>
-                <div className="p-1.5 rounded bg-white border border-research-blue/20 text-center font-medium break-words">
+                <div className="p-1.5 rounded bg-research-paper border border-research-blue/20 text-center font-medium break-words">
                   2. Targeted Multi-Query Retrieval
                 </div>
                 <div className="flex justify-center text-research-blue">
                   <ArrowDown className="w-3 h-3" />
                 </div>
-                <div className="p-1.5 rounded bg-white border border-research-blue/20 text-center font-medium break-words">
+                <div className="p-1.5 rounded bg-research-paper border border-research-blue/20 text-center font-medium break-words">
                   3. Vector Index & Sliding-Window Extract
                 </div>
                 <div className="flex justify-center text-research-blue">
                   <RefreshCw className="w-3 h-3 animate-spin" style={{ animationDuration: '4s' }} />
                 </div>
-                <div className="p-1.5 rounded bg-amber-50 border border-research-warning/30 text-center text-amber-900 font-medium break-words">
+                <div className="p-1.5 rounded bg-research-warningLight border border-research-warning/30 text-center text-research-warning font-medium break-words">
                   4. Autonomous Evidence Gap Detection
                 </div>
                 <div className="flex justify-center text-research-blue">
                   <ArrowDown className="w-3 h-3" />
                 </div>
-                <div className="p-1.5 rounded bg-rose-50 border border-research-coral/30 text-center text-rose-900 font-medium break-words">
+                <div className="p-1.5 rounded bg-research-coralLight border border-research-coral/30 text-center text-research-coral font-medium break-words">
                   5. Contradiction & Perspective Debate
                 </div>
                 <div className="flex justify-center text-research-blue">
                   <ArrowDown className="w-3 h-3" />
                 </div>
-                <div className="p-1.5 rounded bg-emerald-50 border border-research-green/30 text-center text-emerald-900 font-medium break-words">
+                <div className="p-1.5 rounded bg-research-greenLight border border-research-green/30 text-center text-research-green font-medium break-words">
                   6. Factual Claim Verification (NLI)
                 </div>
                 <div className="flex justify-center text-research-blue">
@@ -146,7 +146,7 @@ export const WhyDifferentModal: React.FC<WhyDifferentModalProps> = ({
 
           <div className="mt-5 sm:mt-6 flex justify-end">
             <Dialog.Close asChild>
-              <button className="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-research-primary text-white font-sans text-xs font-semibold hover:bg-black transition-colors min-h-[44px] flex items-center justify-center">
+              <button className="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-research-primary text-white dark:bg-white dark:text-[#101114] font-sans text-xs font-semibold hover:bg-black dark:hover:bg-gray-100 transition-colors min-h-[44px] flex items-center justify-center">
                 Understood
               </button>
             </Dialog.Close>

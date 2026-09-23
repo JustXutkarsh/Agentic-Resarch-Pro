@@ -50,7 +50,7 @@ export const ContinuousDossierView: React.FC<ContinuousDossierViewProps> = ({
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6 sm:space-y-10 pb-16 min-w-0">
       {/* Top Navigation & Actions */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 p-3.5 sm:p-4 rounded-xl bg-white border border-research-border shadow-subtle min-w-0">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 p-3.5 sm:p-4 rounded-xl bg-research-paper border border-research-border shadow-subtle min-w-0">
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <span className="font-mono text-xs font-semibold text-research-blue shrink-0">✦ RESEARCH DOSSIER:</span>
           <span className="font-sans text-xs sm:text-sm font-bold text-research-ink truncate min-w-0">
@@ -79,7 +79,7 @@ export const ContinuousDossierView: React.FC<ContinuousDossierViewProps> = ({
       </div>
 
       {/* SECTION 1: HEADER & EXECUTIVE VERDICT CARD */}
-      <div className="p-4 sm:p-8 md:p-10 rounded-2xl bg-white border border-research-border shadow-card space-y-5 sm:space-y-6 min-w-0">
+      <div className="p-4 sm:p-8 md:p-10 rounded-2xl bg-research-paper border border-research-border shadow-card space-y-5 sm:space-y-6 min-w-0">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 sm:pb-6 border-b border-research-borderLight min-w-0">
           <div className="space-y-1 min-w-0">
             <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-research-blue/10 text-research-blue font-mono text-[11px] sm:text-xs font-semibold">
@@ -156,14 +156,14 @@ export const ContinuousDossierView: React.FC<ContinuousDossierViewProps> = ({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4 min-w-0">
             {topClaims.map((claim, idx) => (
-              <div key={idx} className="p-4 sm:p-6 rounded-xl bg-white border border-research-border shadow-subtle flex flex-col justify-between min-w-0">
+              <div key={idx} className="p-4 sm:p-6 rounded-xl bg-research-paper border border-research-border shadow-subtle flex flex-col justify-between min-w-0">
                 <div>
                   <div className="flex items-center justify-between gap-2 mb-2 sm:mb-3">
                     <span className="font-mono text-xs font-bold text-research-muted">FINDING {idx + 1 < 10 ? `0${idx + 1}` : idx + 1}</span>
                     <span className={`px-2 py-0.5 rounded font-mono text-[10px] font-bold uppercase shrink-0 ${
                       claim.verification_status === 'VERIFIED'
-                        ? 'bg-emerald-50 text-research-green border border-emerald-200'
-                        : 'bg-research-blue/10 text-research-blue'
+                        ? 'bg-research-greenLight text-research-green border border-research-green/30'
+                        : 'bg-research-blue/10 text-research-blue border border-research-blue/30'
                     }`}>
                       {claim.verification_status || 'VERIFIED CLAIM'}
                     </span>
@@ -187,7 +187,7 @@ export const ContinuousDossierView: React.FC<ContinuousDossierViewProps> = ({
       )}
 
       {/* SECTION 3: COMPREHENSIVE RESEARCH REPORT & LITERATURE REVIEW */}
-      <div className="p-4 sm:p-8 md:p-10 rounded-2xl bg-white border border-research-border shadow-card space-y-5 sm:space-y-6 min-w-0">
+      <div className="p-4 sm:p-8 md:p-10 rounded-2xl bg-research-paper border border-research-border shadow-card space-y-5 sm:space-y-6 min-w-0">
         <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-1 pb-3 border-b border-research-borderLight">
           <div className="flex items-center gap-2">
             <BookOpen className="w-4 h-4 text-research-blue shrink-0" />
@@ -257,13 +257,13 @@ export const ContinuousDossierView: React.FC<ContinuousDossierViewProps> = ({
             {result.contradictions.map((contra, idx) => (
               <div
                 key={idx}
-                className="p-4 sm:p-5 rounded-xl bg-white border border-research-border shadow-subtle space-y-3 min-w-0"
+                className="p-4 sm:p-5 rounded-xl bg-research-paper border border-research-border shadow-subtle space-y-3 min-w-0"
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-mono text-xs font-bold text-research-coral uppercase">
                     Tension Point #{idx + 1}
                   </span>
-                  <span className="px-2 py-0.5 rounded bg-rose-50 text-research-coral font-mono text-[10px] font-bold uppercase border border-rose-200 shrink-0">
+                  <span className="px-2 py-0.5 rounded bg-research-coralLight text-research-coral font-mono text-[10px] font-bold uppercase border border-research-coral/30 shrink-0">
                     {contra.severity} SEVERITY
                   </span>
                 </div>
@@ -306,7 +306,7 @@ export const ContinuousDossierView: React.FC<ContinuousDossierViewProps> = ({
             </span>
           </div>
 
-          <div className="bg-white rounded-xl border border-research-border overflow-hidden shadow-subtle min-w-0">
+          <div className="bg-research-paper rounded-xl border border-research-border overflow-hidden shadow-subtle min-w-0">
             <div className="divide-y divide-research-borderLight min-w-0">
               {result.claims.map((claim, idx) => (
                 <div key={idx} className="p-3.5 sm:p-5 hover:bg-research-surface/30 transition-colors min-w-0">
@@ -317,10 +317,10 @@ export const ContinuousDossierView: React.FC<ContinuousDossierViewProps> = ({
                     <span
                       className={`self-start shrink-0 px-2 sm:px-2.5 py-0.5 rounded font-mono text-[9px] sm:text-[10px] font-bold uppercase tracking-wider ${
                         claim.verification_status === 'VERIFIED'
-                          ? 'bg-emerald-50 text-research-green border border-emerald-200'
+                          ? 'bg-research-greenLight text-research-green border border-research-green/30'
                           : claim.verification_status === 'SUPPORTED'
-                          ? 'bg-blue-50 text-research-blue border border-blue-200'
-                          : 'bg-amber-50 text-research-warning border border-amber-200'
+                          ? 'bg-research-blue/10 text-research-blue border border-research-blue/30'
+                          : 'bg-research-warningLight text-research-warning border border-research-warning/30'
                       }`}
                     >
                       {claim.verification_status} ({Math.round(claim.score * 100)}%)
@@ -356,7 +356,7 @@ export const ContinuousDossierView: React.FC<ContinuousDossierViewProps> = ({
                 href={src.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-3.5 sm:p-4 rounded-xl bg-white border border-research-border hover:border-research-blue/60 shadow-subtle hover:shadow-card transition-all group flex flex-col justify-between min-w-0"
+                className="p-3.5 sm:p-4 rounded-xl bg-research-paper border border-research-border hover:border-research-blue/60 shadow-subtle hover:shadow-card transition-all group flex flex-col justify-between min-w-0"
               >
                 <div className="min-w-0">
                   <div className="flex items-center justify-between gap-2 mb-1.5 min-w-0">

@@ -121,7 +121,7 @@ export const LiveResearchTrail: React.FC<LiveResearchTrailProps> = ({
               </span>
             </div>
 
-            <div className="font-mono text-[11px] sm:text-xs font-semibold text-research-secondary px-2.5 sm:px-3 py-1.5 rounded-full bg-white border border-research-borderLight whitespace-nowrap">
+            <div className="font-mono text-[11px] sm:text-xs font-semibold text-research-secondary px-2.5 sm:px-3 py-1.5 rounded-full bg-research-paper border border-research-borderLight whitespace-nowrap">
               {formatElapsed(elapsedSeconds)}
             </div>
           </div>
@@ -165,7 +165,7 @@ export const LiveResearchTrail: React.FC<LiveResearchTrailProps> = ({
 
       {/* Live Compact Metrics */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 min-w-0">
-        <div className="p-3 sm:p-3.5 rounded-xl bg-white border border-research-borderLight shadow-subtle min-w-0">
+        <div className="p-3 sm:p-3.5 rounded-xl bg-research-paper border border-research-borderLight shadow-subtle min-w-0">
           <div className="font-mono text-[9px] sm:text-[10px] text-research-muted uppercase font-semibold truncate">
             Sources Found
           </div>
@@ -174,7 +174,7 @@ export const LiveResearchTrail: React.FC<LiveResearchTrailProps> = ({
           </div>
         </div>
 
-        <div className="p-3 sm:p-3.5 rounded-xl bg-white border border-research-borderLight shadow-subtle min-w-0">
+        <div className="p-3 sm:p-3.5 rounded-xl bg-research-paper border border-research-borderLight shadow-subtle min-w-0">
           <div className="font-mono text-[9px] sm:text-[10px] text-research-muted uppercase font-semibold truncate">
             Perspectives
           </div>
@@ -183,7 +183,7 @@ export const LiveResearchTrail: React.FC<LiveResearchTrailProps> = ({
           </div>
         </div>
 
-        <div className="p-3 sm:p-3.5 rounded-xl bg-white border border-research-borderLight shadow-subtle min-w-0">
+        <div className="p-3 sm:p-3.5 rounded-xl bg-research-paper border border-research-borderLight shadow-subtle min-w-0">
           <div className="font-mono text-[9px] sm:text-[10px] text-research-muted uppercase font-semibold truncate">
             Evidence Chunks
           </div>
@@ -192,7 +192,7 @@ export const LiveResearchTrail: React.FC<LiveResearchTrailProps> = ({
           </div>
         </div>
 
-        <div className="p-3 sm:p-3.5 rounded-xl bg-white border border-research-borderLight shadow-subtle min-w-0">
+        <div className="p-3 sm:p-3.5 rounded-xl bg-research-paper border border-research-borderLight shadow-subtle min-w-0">
           <div className="font-mono text-[9px] sm:text-[10px] text-research-muted uppercase font-semibold truncate">
             Iterations
           </div>
@@ -300,13 +300,13 @@ export const LiveResearchTrail: React.FC<LiveResearchTrailProps> = ({
 
         {/* Error notification if pipeline encountered issues */}
         {error && (
-          <div className="mt-6 p-4 rounded-xl bg-rose-50 border border-research-coral/40 flex items-start gap-3 text-rose-900 min-w-0">
+          <div className="mt-6 p-4 rounded-xl bg-research-coralLight border border-research-coral/40 flex items-start gap-3 text-research-coral min-w-0">
             <AlertCircle className="w-5 h-5 text-research-coral shrink-0 mt-0.5" />
             <div className="min-w-0">
               <div className="font-sans text-xs font-bold uppercase tracking-wider">
                 Research Pipeline Error
               </div>
-              <div className="font-body text-xs mt-0.5 break-words">{error}</div>
+              <div className="font-body text-xs mt-0.5 break-words text-research-primary">{error}</div>
             </div>
           </div>
         )}

@@ -2,6 +2,69 @@
 @tailwind components;
 @tailwind utilities;
 
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+  --research-bg-rgb: 246, 245, 241;
+  --research-paper-rgb: 255, 255, 255;
+  --research-primary-rgb: 23, 24, 28;
+  --research-ink-rgb: 16, 17, 20;
+  --research-secondary-rgb: 87, 88, 97;
+  --research-muted-rgb: 138, 139, 145;
+  --research-border-rgb: 226, 224, 216;
+  --research-border-light-rgb: 237, 236, 231;
+  --research-blue-rgb: 49, 91, 255;
+  --research-deep-blue-rgb: 33, 70, 216;
+  --research-green-rgb: 22, 132, 99;
+  --research-green-light-rgb: 232, 245, 240;
+  --research-warning-rgb: 200, 138, 22;
+  --research-warning-light-rgb: 254, 247, 235;
+  --research-coral-rgb: 216, 93, 74;
+  --research-coral-light-rgb: 253, 240, 238;
+  --research-surface-rgb: 240, 239, 234;
+
+  --research-shadow-subtle: 0 1px 3px rgba(16, 17, 20, 0.04), 0 4px 12px rgba(16, 17, 20, 0.03);
+  --research-shadow-card: 0 2px 8px rgba(16, 17, 20, 0.05), 0 12px 28px rgba(16, 17, 20, 0.04);
+  --research-shadow-card-hover: 0 8px 24px rgba(16, 17, 20, 0.08), 0 20px 48px rgba(49, 91, 255, 0.08);
+  --research-shadow-composer: 0 4px 20px rgba(16, 17, 20, 0.06), 0 1px 2px rgba(16, 17, 20, 0.04);
+  --research-shadow-composer-focus: 0 0 0 3px rgba(49, 91, 255, 0.15), 0 8px 30px rgba(49, 91, 255, 0.12);
+
+  --scrollbar-track: #F6F5F1;
+  --scrollbar-thumb: #D5D3CC;
+  --scrollbar-thumb-hover: #B6B4AC;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --research-bg-rgb: 16, 17, 20;
+  --research-paper-rgb: 23, 25, 30;
+  --research-primary-rgb: 244, 243, 239;
+  --research-ink-rgb: 255, 255, 255;
+  --research-secondary-rgb: 162, 164, 171;
+  --research-muted-rgb: 113, 115, 124;
+  --research-border-rgb: 39, 41, 48;
+  --research-border-light-rgb: 31, 33, 39;
+  --research-blue-rgb: 108, 140, 255;
+  --research-deep-blue-rgb: 80, 115, 245;
+  --research-green-rgb: 52, 211, 153;
+  --research-green-light-rgb: 19, 43, 34;
+  --research-warning-rgb: 251, 191, 36;
+  --research-warning-light-rgb: 43, 36, 18;
+  --research-coral-rgb: 248, 113, 113;
+  --research-coral-light-rgb: 46, 22, 22;
+  --research-surface-rgb: 29, 31, 37;
+
+  --research-shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.25);
+  --research-shadow-card: 0 2px 8px rgba(0, 0, 0, 0.5), 0 12px 28px rgba(0, 0, 0, 0.35);
+  --research-shadow-card-hover: 0 8px 24px rgba(0, 0, 0, 0.6), 0 20px 48px rgba(108, 140, 255, 0.12);
+  --research-shadow-composer: 0 4px 20px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --research-shadow-composer-focus: 0 0 0 3px rgba(108, 140, 255, 0.25), 0 8px 30px rgba(108, 140, 255, 0.2);
+
+  --scrollbar-track: #101114;
+  --scrollbar-thumb: #2D3039;
+  --scrollbar-thumb-hover: #434754;
+}
+
 @layer base {
   html {
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
@@ -37,20 +100,29 @@
   }
 }
 
-/* Custom subtle scrollbar */
+/* Smooth theme transition */
+html.theme-transition,
+html.theme-transition *,
+html.theme-transition *::before,
+html.theme-transition *::after {
+  transition: background-color 200ms ease, border-color 200ms ease, color 200ms ease, fill 200ms ease, stroke 200ms ease, box-shadow 200ms ease !important;
+  transition-delay: 0s !important;
+}
+
+/* Custom subtle scrollbar using theme variables */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #F6F5F1;
+  background: var(--scrollbar-track);
 }
 ::-webkit-scrollbar-thumb {
-  background: #D5D3CC;
+  background: var(--scrollbar-thumb);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #B6B4AC;
+  background: var(--scrollbar-thumb-hover);
 }
 
 /* React Flow canvas styling override for subtle atmosphere */

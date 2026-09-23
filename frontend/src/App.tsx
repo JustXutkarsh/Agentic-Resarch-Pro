@@ -4,6 +4,7 @@ import { ResearchComposer } from './components/ResearchComposer';
 import { WhyDifferentModal } from './components/WhyDifferentModal';
 import { LiveResearchTrail } from './components/LiveResearchTrail';
 import { ContinuousDossierView } from './components/ContinuousDossierView';
+import { ThemeToggle } from './components/ThemeToggle';
 import type { ResearchDepth, ProgressEvent, ResearchResultData } from './types/research';
 import { getApiUrl } from './config/api';
 
@@ -125,15 +126,16 @@ export const App: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
+            <ThemeToggle />
             <div
-              className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded-full bg-white border border-research-borderLight text-xs font-mono"
+              className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded-full bg-research-paper border border-research-borderLight text-xs font-mono"
               title="Autonomous Research Engine Ready"
             >
               <span className="w-2 h-2 rounded-full bg-research-green shrink-0 animate-pulse" />
               <span className="hidden sm:inline text-[11px] text-research-secondary font-medium">READY</span>
             </div>
             <div
-              className="w-7 h-7 rounded-full bg-research-primary text-white font-mono text-xs font-bold flex items-center justify-center shadow-sm shrink-0"
+              className="w-7 h-7 rounded-full bg-research-primary text-white dark:bg-research-paper dark:text-research-primary dark:border dark:border-research-border font-mono text-xs font-bold flex items-center justify-center shadow-sm shrink-0"
               aria-label="Examiner session: Utkarsh Pandey"
             >
               U

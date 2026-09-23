@@ -11,6 +11,7 @@ import {
   BackgroundVariant,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+import { useTheme } from '../context/ThemeContext';
 
 interface AgenticHeroGraphProps {
   isResearching?: boolean;
@@ -32,12 +33,12 @@ const NetworkNode = ({
         data.active
           ? 'bg-research-blue/10 border-research-blue text-research-blue shadow-[0_0_16px_rgba(49,91,255,0.25)]'
           : isInsight
-          ? 'bg-white/90 border-research-green text-research-green font-semibold shadow-sm'
+          ? 'bg-research-paper/90 border-research-green text-research-green font-semibold shadow-sm'
           : isQuestion
-          ? 'bg-white/95 border-research-primary text-research-primary font-semibold shadow-subtle'
+          ? 'bg-research-paper/95 border-research-primary text-research-primary font-semibold shadow-subtle'
           : isPlaywright
-          ? 'bg-white/95 border-research-blue/70 text-research-blue font-semibold shadow-subtle hover:border-research-blue'
-          : 'bg-white/80 border-research-border text-research-secondary shadow-subtle hover:border-research-blue/60'
+          ? 'bg-research-paper/95 border-research-blue/70 text-research-blue font-semibold shadow-subtle hover:border-research-blue'
+          : 'bg-research-paper/80 border-research-border text-research-secondary shadow-subtle hover:border-research-blue/60'
       }`}
       style={{
         minWidth: data.compact ? 76 : 92,
@@ -77,6 +78,7 @@ const AgenticHeroGraphContent: React.FC<AgenticHeroGraphProps> = ({ isResearchin
   const containerRef = useRef<HTMLDivElement>(null);
   const [isCompact, setIsCompact] = useState(false);
   const { fitView } = useReactFlow();
+  const { isDark } = useTheme();
 
   // Responsive container width detection
   useEffect(() => {
@@ -261,28 +263,31 @@ const AgenticHeroGraphContent: React.FC<AgenticHeroGraphProps> = ({ isResearchin
     ];
   }, [isResearching, isCompact]);
 
-  const edges: Edge[] = useMemo(
-    () => [
-      { id: 'e-q-a1', source: 'q', target: 'a1', animated: true, style: { stroke: isResearching ? '#315BFF' : '#D1CFCA', strokeWidth: 1.5 } },
-      { id: 'e-q-a2', source: 'q', target: 'a2', animated: true, style: { stroke: isResearching ? '#315BFF' : '#D1CFCA', strokeWidth: 1.5 } },
-      { id: 'e-q-a3', source: 'q', target: 'a3', animated: true, style: { stroke: isResearching ? '#315BFF' : '#D1CFCA', strokeWidth: 1.5 } },
-      { id: 'e-a1-src', source: 'a1', target: 'src', animated: true, style: { stroke: isResearching ? '#315BFF' : '#D1CFCA', strokeWidth: 1.2 } },
-      { id: 'e-a2-pw', source: 'a2', target: 'pw', animated: true, style: { stroke: isResearching ? '#315BFF' : '#D1CFCA', strokeWidth: 1.5 } },
-      { id: 'e-a3-ev', source: 'a3', target: 'ev', animated: true, style: { stroke: isResearching ? '#315BFF' : '#D1CFCA', strokeWidth: 1.2 } },
-      { id: 'e-src-pw', source: 'src', target: 'pw', animated: true, style: { stroke: isResearching ? '#315BFF' : '#D1CFCA', strokeWidth: 1.3 } },
-      { id: 'e-pw-ev', source: 'pw', target: 'ev', animated: true, style: { stroke: isResearching ? '#315BFF' : '#D1CFCA', strokeWidth: 1.3 } },
-      { id: 'e-src-ver', source: 'src', target: 'ver', animated: true, style: { stroke: isResearching ? '#168463' : '#D1CFCA', strokeWidth: 1.2 } },
-      { id: 'e-pw-ver', source: 'pw', target: 'ver', animated: true, style: { stroke: isResearching ? '#168463' : '#D1CFCA', strokeWidth: 1.5 } },
-      { id: 'e-ev-ver', source: 'ev', target: 'ver', animated: true, style: { stroke: isResearching ? '#168463' : '#D1CFCA', strokeWidth: 1.5 } },
-      { id: 'e-ver-ins', source: 'ver', target: 'ins', animated: true, style: { stroke: isResearching ? '#315BFF' : '#D1CFCA', strokeWidth: 2 } },
-    ],
-    [isResearching]
-  );
+  const edges: Edge[] = useMemo(() => {
+    const inactiveEdgeColor = isDark ? '#2B2E37' : '#D1CFCA';
+    const activeBlue = isDark ? '#6C8CFF' : '#315BFF';
+    const activeGreen = isDark ? '#34D399' : '#168463';
+
+    return [
+      { id: 'e-q-a1', source: 'q', target: 'a1', animated: true, style: { stroke: isResearching ? activeBlue : inactiveEdgeColor, strokeWidth: 1.5 } },
+      { id: 'e-q-a2', source: 'q', target: 'a2', animated: true, style: { stroke: isResearching ? activeBlue : inactiveEdgeColor, strokeWidth: 1.5 } },
+      { id: 'e-q-a3', source: 'q', target: 'a3', animated: true, style: { stroke: isResearching ? activeBlue : inactiveEdgeColor, strokeWidth: 1.5 } },
+      { id: 'e-a1-src', source: 'a1', target: 'src', animated: true, style: { stroke: isResearching ? activeBlue : inactiveEdgeColor, strokeWidth: 1.2 } },
+      { id: 'e-a2-pw', source: 'a2', target: 'pw', animated: true, style: { stroke: isResearching ? activeBlue : inactiveEdgeColor, strokeWidth: 1.5 } },
+      { id: 'e-a3-ev', source: 'a3', target: 'ev', animated: true, style: { stroke: isResearching ? activeBlue : inactiveEdgeColor, strokeWidth: 1.2 } },
+      { id: 'e-src-pw', source: 'src', target: 'pw', animated: true, style: { stroke: isResearching ? activeBlue : inactiveEdgeColor, strokeWidth: 1.3 } },
+      { id: 'e-pw-ev', source: 'pw', target: 'ev', animated: true, style: { stroke: isResearching ? activeBlue : inactiveEdgeColor, strokeWidth: 1.3 } },
+      { id: 'e-src-ver', source: 'src', target: 'ver', animated: true, style: { stroke: isResearching ? activeGreen : inactiveEdgeColor, strokeWidth: 1.2 } },
+      { id: 'e-pw-ver', source: 'pw', target: 'ver', animated: true, style: { stroke: isResearching ? activeGreen : inactiveEdgeColor, strokeWidth: 1.5 } },
+      { id: 'e-ev-ver', source: 'ev', target: 'ver', animated: true, style: { stroke: isResearching ? activeGreen : inactiveEdgeColor, strokeWidth: 1.5 } },
+      { id: 'e-ver-ins', source: 'ver', target: 'ins', animated: true, style: { stroke: isResearching ? activeBlue : inactiveEdgeColor, strokeWidth: 2 } },
+    ];
+  }, [isResearching, isDark]);
 
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-[340px] sm:h-[400px] rounded-2xl border border-research-border/80 bg-gradient-to-b from-white/40 via-[#F6F5F1]/80 to-[#F6F5F1] overflow-hidden shadow-subtle min-w-0"
+      className="relative w-full h-[340px] sm:h-[400px] rounded-2xl border border-research-border/80 bg-gradient-to-b from-research-paper/40 via-research-bg/80 to-research-bg overflow-hidden shadow-subtle min-w-0"
     >
       {/* Subtle top indicator */}
       <div className="absolute top-2.5 sm:top-3 left-3 sm:left-4 z-10 flex items-center gap-1.5 sm:gap-2 pointer-events-none">
@@ -312,12 +317,12 @@ const AgenticHeroGraphContent: React.FC<AgenticHeroGraphProps> = ({ isResearchin
           variant={BackgroundVariant.Dots}
           gap={20}
           size={1}
-          color="#D8D6CF"
+          color={isDark ? '#262831' : '#D8D6CF'}
         />
       </ReactFlow>
 
       {/* Atmospheric bottom gradient fade */}
-      <div className="absolute inset-x-0 bottom-0 h-10 sm:h-12 bg-gradient-to-t from-[#F6F5F1] to-transparent pointer-events-none" />
+      <div className="absolute inset-x-0 bottom-0 h-10 sm:h-12 bg-gradient-to-t from-research-bg to-transparent pointer-events-none" />
     </div>
   );
 };

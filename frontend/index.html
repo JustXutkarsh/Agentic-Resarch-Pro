@@ -6,6 +6,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>✦ AGENTIC RESEARCH — Autonomous Research Instrument</title>
     <meta name="description" content="Autonomous agentic research instrument featuring iterative evidence retrieval, contradiction detection, and publication-grade research synthesis." />
+
+    <!-- Synchronous Theme Initialization: Executes before first paint to prevent flash (FOUC) -->
+    <script>
+      (function() {
+        var STORAGE_KEY = 'agentic-research-pro-theme';
+        var theme = 'light';
+        try {
+          var stored = localStorage.getItem(STORAGE_KEY);
+          if (stored === 'dark' || stored === 'light') {
+            theme = stored;
+          } else {
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+              theme = 'dark';
+            }
+          }
+        } catch (e) {
+          if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            theme = 'dark';
+          }
+        }
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.style.colorScheme = theme;
+      })();
+    </script>
     
     <!-- Google Fonts: Space Grotesk, Instrument Serif, Inter, IBM Plex Mono -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
