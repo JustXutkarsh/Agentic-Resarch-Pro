@@ -104,28 +104,38 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-between bg-research-bg text-research-primary font-sans">
+    <div className="min-h-screen min-h-dvh flex flex-col justify-between bg-research-bg text-research-primary font-sans overflow-x-hidden">
       {/* Top Compact Navigation Bar */}
       <header className="sticky top-0 z-40 w-full bg-research-bg/90 backdrop-blur-md border-b border-research-border">
-        <div className="max-w-instrument mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+        <div className="max-w-instrument mx-auto px-3 sm:px-6 h-14 flex items-center justify-between">
           <div
             onClick={handleNewInvestigation}
-            className="flex items-center gap-2 cursor-pointer select-none group"
+            className="flex items-center gap-1.5 sm:gap-2 cursor-pointer select-none group min-h-[44px]"
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === 'Enter' && handleNewInvestigation()}
+            aria-label="Agentic Research Home"
           >
-            <span className="font-sans text-sm sm:text-base font-bold tracking-tight text-research-ink group-hover:text-research-blue transition-colors">
+            <span className="font-sans text-xs xs:text-sm sm:text-base font-bold tracking-tight text-research-ink group-hover:text-research-blue transition-colors whitespace-nowrap">
               ✦ AGENTIC RESEARCH
             </span>
-            <span className="font-mono text-[10px] uppercase font-bold text-research-blue bg-research-blue/10 px-1.5 py-0.5 rounded">
+            <span className="font-mono text-[9px] sm:text-[10px] uppercase font-bold text-research-blue bg-research-blue/10 px-1 sm:px-1.5 py-0.5 rounded whitespace-nowrap">
               v2.0 PRO
             </span>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white border border-research-borderLight text-xs font-mono">
-              <span className="w-2 h-2 rounded-full bg-research-green" />
-              <span className="text-[11px] text-research-secondary font-medium">READY</span>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div
+              className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded-full bg-white border border-research-borderLight text-xs font-mono"
+              title="Autonomous Research Engine Ready"
+            >
+              <span className="w-2 h-2 rounded-full bg-research-green shrink-0 animate-pulse" />
+              <span className="hidden sm:inline text-[11px] text-research-secondary font-medium">READY</span>
             </div>
-            <div className="w-7 h-7 rounded-full bg-research-primary text-white font-mono text-xs font-bold flex items-center justify-center shadow-sm">
+            <div
+              className="w-7 h-7 rounded-full bg-research-primary text-white font-mono text-xs font-bold flex items-center justify-center shadow-sm shrink-0"
+              aria-label="Examiner session: Utkarsh Pandey"
+            >
               U
             </div>
           </div>
@@ -133,40 +143,42 @@ export const App: React.FC = () => {
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-instrument w-full mx-auto px-4 sm:px-6 py-8 sm:py-12">
+      <main className="flex-1 max-w-instrument w-full mx-auto px-3 sm:px-6 py-6 sm:py-12 min-w-0">
         {screen === 'home' && (
-          <div className="space-y-10 sm:space-y-12">
+          <div className="space-y-8 sm:space-y-12 min-w-0">
             {/* Hero Typography */}
-            <div className="text-center max-w-2xl mx-auto space-y-3">
-              <div className="font-mono text-[11px] font-bold tracking-[0.2em] text-research-muted uppercase">
+            <div className="text-center max-w-2xl mx-auto space-y-3 min-w-0 px-1">
+              <div className="font-mono text-[10px] sm:text-[11px] font-bold tracking-[0.2em] text-research-muted uppercase">
                 Autonomous Research Instrument
               </div>
-              <h1 className="text-4xl sm:text-5xl md:text-6xl font-sans font-bold tracking-tight text-research-ink leading-[1.08]">
+              <h1 className="text-3xl sm:text-5xl md:text-6xl font-sans font-bold tracking-tight text-research-ink leading-[1.12] sm:leading-[1.08] break-words">
                 Research beyond{' '}
                 <span className="font-serif italic font-normal text-research-blue text-[1.12em] tracking-normal">
                   the obvious.
                 </span>
               </h1>
-              <p className="font-body text-sm sm:text-base text-research-secondary leading-relaxed pt-1">
+              <p className="font-body text-xs sm:text-base text-research-secondary leading-relaxed pt-1 max-w-xl mx-auto break-words">
                 Semi-autonomous evidence retrieval, multi-angle dialectic debate, and continuous publication-grade dossiers.
               </p>
             </div>
 
             {/* Atmospheric Research Network Graphic */}
-            <div className="max-w-3xl mx-auto">
+            <div className="max-w-3xl mx-auto w-full min-w-0">
               <AgenticHeroGraph isResearching={false} />
             </div>
 
             {/* Research Command Surface (Composer) */}
-            <ResearchComposer
-              onStartResearch={handleStartResearch}
-              onOpenWhyDifferent={() => setIsWhyDifferentOpen(true)}
-            />
+            <div className="w-full min-w-0">
+              <ResearchComposer
+                onStartResearch={handleStartResearch}
+                onOpenWhyDifferent={() => setIsWhyDifferentOpen(true)}
+              />
+            </div>
           </div>
         )}
 
         {screen === 'live' && (
-          <div className="py-4">
+          <div className="py-2 sm:py-4 min-w-0 w-full">
             <LiveResearchTrail
               topic={topic}
               depth={depth}
@@ -181,7 +193,7 @@ export const App: React.FC = () => {
               <div className="text-center mt-6">
                 <button
                   onClick={() => setScreen('dossier')}
-                  className="px-6 py-2.5 rounded-xl bg-research-blue text-white font-sans text-xs font-bold hover:bg-research-deepBlue transition-colors shadow-md animate-bounce"
+                  className="w-full sm:w-auto px-6 py-3 rounded-xl bg-research-blue text-white font-sans text-xs font-bold hover:bg-research-deepBlue transition-colors shadow-md animate-bounce min-h-[44px]"
                 >
                   View Final Research Dossier →
                 </button>
@@ -191,16 +203,18 @@ export const App: React.FC = () => {
         )}
 
         {screen === 'dossier' && result && (
-          <ContinuousDossierView
-            result={result}
-            onNewInvestigation={handleNewInvestigation}
-          />
+          <div className="min-w-0 w-full">
+            <ContinuousDossierView
+              result={result}
+              onNewInvestigation={handleNewInvestigation}
+            />
+          </div>
         )}
       </main>
 
       {/* Permanent Examiner Attribution Footer on Every Screen */}
-      <footer className="w-full border-t border-research-border bg-research-bg py-5">
-        <div className="max-w-instrument mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs">
+      <footer className="w-full border-t border-research-border bg-research-bg py-5 safe-pb">
+        <div className="max-w-instrument mx-auto px-3 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-2.5 text-center sm:text-left text-xs min-w-0">
           <div className="font-mono font-semibold text-research-primary">
             Built by - <span className="font-bold">Utkarsh Pandey</span>
           </div>

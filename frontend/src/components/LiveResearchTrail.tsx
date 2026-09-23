@@ -86,12 +86,12 @@ export const LiveResearchTrail: React.FC<LiveResearchTrailProps> = ({
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto space-y-6">
+    <div className="w-full max-w-4xl mx-auto space-y-4 sm:space-y-6 min-w-0">
       {/* Investigation Header */}
-      <div className="p-6 rounded-2xl bg-research-paper border border-research-border shadow-subtle">
+      <div className="p-4 sm:p-6 rounded-2xl bg-research-paper border border-research-border shadow-subtle min-w-0">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-1.5">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 mb-1.5 flex-wrap">
               <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-research-blue">
                 Investigating Topic
               </span>
@@ -100,15 +100,15 @@ export const LiveResearchTrail: React.FC<LiveResearchTrailProps> = ({
                 {depth} MODE
               </span>
             </div>
-            <h2 className="font-serif text-2xl sm:text-3xl text-research-ink italic font-normal">
+            <h2 className="font-serif text-xl sm:text-2xl md:text-3xl text-research-ink italic font-normal break-words">
               "{topic}"
             </h2>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-research-surface border border-research-border text-xs font-mono">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 shrink-0">
+            <div className="flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 rounded-full bg-research-surface border border-research-border text-xs font-mono">
               <span
-                className={`w-2.5 h-2.5 rounded-full ${
+                className={`w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full shrink-0 ${
                   isComplete
                     ? 'bg-research-green'
                     : error
@@ -116,26 +116,26 @@ export const LiveResearchTrail: React.FC<LiveResearchTrailProps> = ({
                     : 'bg-research-blue animate-ping'
                 }`}
               />
-              <span className="font-semibold text-research-primary uppercase tracking-wide">
+              <span className="font-semibold text-research-primary uppercase tracking-wide text-[10px] sm:text-xs">
                 {isComplete ? 'RESEARCH COMPLETE' : error ? 'ERROR' : 'RESEARCHING'}
               </span>
             </div>
 
-            <div className="font-mono text-xs font-semibold text-research-secondary px-3 py-1.5 rounded-full bg-white border border-research-borderLight">
+            <div className="font-mono text-[11px] sm:text-xs font-semibold text-research-secondary px-2.5 sm:px-3 py-1.5 rounded-full bg-white border border-research-borderLight whitespace-nowrap">
               {formatElapsed(elapsedSeconds)}
             </div>
           </div>
         </div>
 
         {/* 7-Stage Progression Bar */}
-        <div className="mt-6 pt-5 border-t border-research-borderLight">
-          <div className="grid grid-cols-7 gap-1 sm:gap-2">
+        <div className="mt-5 sm:mt-6 pt-4 sm:pt-5 border-t border-research-borderLight min-w-0">
+          <div className="grid grid-cols-7 gap-1 sm:gap-2 min-w-0">
             {STAGES.map((stage, idx) => {
               const isPassed = idx < activeStageIndex || isComplete;
               const isCurrent = idx === activeStageIndex && !isComplete;
 
               return (
-                <div key={stage.key} className="text-center group">
+                <div key={stage.key} className="text-center group min-w-0">
                   <div
                     className={`h-1.5 rounded-full transition-all duration-300 ${
                       isPassed
@@ -146,7 +146,7 @@ export const LiveResearchTrail: React.FC<LiveResearchTrailProps> = ({
                     }`}
                   />
                   <div
-                    className={`font-mono text-[9px] sm:text-[10px] mt-1.5 uppercase font-medium truncate ${
+                    className={`font-mono text-[8px] xs:text-[9px] sm:text-[10px] mt-1.5 uppercase font-medium truncate block ${
                       isPassed
                         ? 'text-research-blue font-semibold'
                         : isCurrent
@@ -164,49 +164,49 @@ export const LiveResearchTrail: React.FC<LiveResearchTrailProps> = ({
       </div>
 
       {/* Live Compact Metrics */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="p-3.5 rounded-xl bg-white border border-research-borderLight shadow-subtle">
-          <div className="font-mono text-[10px] text-research-muted uppercase font-semibold">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 min-w-0">
+        <div className="p-3 sm:p-3.5 rounded-xl bg-white border border-research-borderLight shadow-subtle min-w-0">
+          <div className="font-mono text-[9px] sm:text-[10px] text-research-muted uppercase font-semibold truncate">
             Sources Found
           </div>
-          <div className="font-sans text-2xl font-bold text-research-ink mt-0.5">
+          <div className="font-sans text-xl sm:text-2xl font-bold text-research-ink mt-0.5">
             {metrics.sources.toString().padStart(2, '0')}
           </div>
         </div>
 
-        <div className="p-3.5 rounded-xl bg-white border border-research-borderLight shadow-subtle">
-          <div className="font-mono text-[10px] text-research-muted uppercase font-semibold">
+        <div className="p-3 sm:p-3.5 rounded-xl bg-white border border-research-borderLight shadow-subtle min-w-0">
+          <div className="font-mono text-[9px] sm:text-[10px] text-research-muted uppercase font-semibold truncate">
             Perspectives
           </div>
-          <div className="font-sans text-2xl font-bold text-research-blue mt-0.5">
+          <div className="font-sans text-xl sm:text-2xl font-bold text-research-blue mt-0.5">
             {metrics.perspectives.toString().padStart(2, '0')}
           </div>
         </div>
 
-        <div className="p-3.5 rounded-xl bg-white border border-research-borderLight shadow-subtle">
-          <div className="font-mono text-[10px] text-research-muted uppercase font-semibold">
+        <div className="p-3 sm:p-3.5 rounded-xl bg-white border border-research-borderLight shadow-subtle min-w-0">
+          <div className="font-mono text-[9px] sm:text-[10px] text-research-muted uppercase font-semibold truncate">
             Evidence Chunks
           </div>
-          <div className="font-sans text-2xl font-bold text-research-green mt-0.5">
+          <div className="font-sans text-xl sm:text-2xl font-bold text-research-green mt-0.5">
             {metrics.evidence.toString().padStart(2, '0')}
           </div>
         </div>
 
-        <div className="p-3.5 rounded-xl bg-white border border-research-borderLight shadow-subtle">
-          <div className="font-mono text-[10px] text-research-muted uppercase font-semibold">
+        <div className="p-3 sm:p-3.5 rounded-xl bg-white border border-research-borderLight shadow-subtle min-w-0">
+          <div className="font-mono text-[9px] sm:text-[10px] text-research-muted uppercase font-semibold truncate">
             Iterations
           </div>
-          <div className="font-sans text-2xl font-bold text-research-warning mt-0.5">
+          <div className="font-sans text-xl sm:text-2xl font-bold text-research-warning mt-0.5">
             {metrics.iterations.toString().padStart(2, '0')}
           </div>
         </div>
       </div>
 
       {/* Vertical Animated Research Trail */}
-      <div className="p-6 sm:p-8 rounded-2xl bg-research-paper border border-research-border shadow-subtle">
-        <div className="flex items-center justify-between pb-4 mb-6 border-b border-research-borderLight">
+      <div className="p-4 sm:p-6 md:p-8 rounded-2xl bg-research-paper border border-research-border shadow-subtle min-w-0">
+        <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-1 pb-4 mb-4 sm:mb-6 border-b border-research-borderLight">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-research-blue animate-pulse" />
+            <span className="w-2 h-2 rounded-full bg-research-blue animate-pulse shrink-0" />
             <span className="font-mono text-xs font-bold uppercase tracking-wider text-research-primary">
               Live Investigation Trail
             </span>
@@ -222,7 +222,7 @@ export const LiveResearchTrail: React.FC<LiveResearchTrailProps> = ({
             <span>Establishing pipeline connection and formulating initial hypotheses...</span>
           </div>
         ) : (
-          <div ref={scrollRef} className="max-h-[460px] overflow-y-auto pr-2 space-y-4">
+          <div ref={scrollRef} className="max-h-[380px] sm:max-h-[460px] overflow-y-auto pr-1 sm:pr-2 space-y-3 sm:space-y-4">
             <AnimatePresence initial={false}>
               {events.map((event, idx) => {
                 const isLatest = idx === events.length - 1 && !isComplete;
@@ -237,10 +237,10 @@ export const LiveResearchTrail: React.FC<LiveResearchTrailProps> = ({
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.35, ease: 'easeOut' }}
-                    className="flex items-start gap-3 sm:gap-4 relative group"
+                    className="flex items-start gap-2.5 sm:gap-4 relative group min-w-0"
                   >
-                    {/* Timestamp column */}
-                    <div className="font-mono text-xs font-medium text-research-muted w-24 sm:w-28 shrink-0 pt-0.5">
+                    {/* Compact responsive timestamp column */}
+                    <div className="font-mono text-[10px] sm:text-xs font-medium text-research-muted w-16 sm:w-24 shrink-0 pt-0.5 truncate">
                       {event.clock_time}
                     </div>
 
@@ -271,9 +271,9 @@ export const LiveResearchTrail: React.FC<LiveResearchTrailProps> = ({
                     </div>
 
                     {/* Event Message */}
-                    <div className="flex-1 pb-1">
+                    <div className="flex-1 min-w-0 pb-1">
                       <div
-                        className={`font-sans text-sm leading-relaxed ${
+                        className={`font-sans text-xs sm:text-sm leading-relaxed break-words ${
                           isLatest
                             ? 'font-bold text-research-blue'
                             : 'font-normal text-research-primary'
@@ -286,7 +286,7 @@ export const LiveResearchTrail: React.FC<LiveResearchTrailProps> = ({
                       </div>
 
                       {event.details && event.details !== event.friendly_message && (
-                        <div className="font-body text-xs text-research-muted mt-0.5 truncate max-w-xl">
+                        <div className="font-body text-[11px] sm:text-xs text-research-muted mt-0.5 break-words line-clamp-3 sm:line-clamp-none">
                           {event.details}
                         </div>
                       )}
@@ -300,13 +300,13 @@ export const LiveResearchTrail: React.FC<LiveResearchTrailProps> = ({
 
         {/* Error notification if pipeline encountered issues */}
         {error && (
-          <div className="mt-6 p-4 rounded-xl bg-rose-50 border border-research-coral/40 flex items-start gap-3 text-rose-900">
+          <div className="mt-6 p-4 rounded-xl bg-rose-50 border border-research-coral/40 flex items-start gap-3 text-rose-900 min-w-0">
             <AlertCircle className="w-5 h-5 text-research-coral shrink-0 mt-0.5" />
-            <div>
+            <div className="min-w-0">
               <div className="font-sans text-xs font-bold uppercase tracking-wider">
                 Research Pipeline Error
               </div>
-              <div className="font-body text-xs mt-0.5">{error}</div>
+              <div className="font-body text-xs mt-0.5 break-words">{error}</div>
             </div>
           </div>
         )}
