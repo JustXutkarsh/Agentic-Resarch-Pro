@@ -13,9 +13,11 @@ research_dossier_*.pdf
 .DS_Store
 .chroma/
 chroma_data/
-scratch/*.png
-scratch/*.pdf
+scratch/
+data/
+nvidia_live_validation_result.json
 node_modules/
 frontend/node_modules/
+frontend/dist/
 .pytest_cache/
 

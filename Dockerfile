@@ -47,5 +47,5 @@ COPY tests/ ./tests/
 # Expose default port
 EXPOSE 8000
 
-# Start FastAPI with Uvicorn binding to 0.0.0.0 and dynamic $PORT (Render / Railway / local)
+# Start FastAPI with Uvicorn binding to 0.0.0.0 and dynamic $PORT (Render / local)
 CMD ["sh", "-c", "uvicorn server:app --host 0.0.0.0 --port ${PORT:-8000}"]

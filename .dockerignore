@@ -30,5 +30,7 @@ frontend/dist/
 # Local data, scratch, and test generated PDFs
 *.pdf
 scratch/
+data/
+nvidia_live_validation_result.json
 chroma_data/
 .chroma/

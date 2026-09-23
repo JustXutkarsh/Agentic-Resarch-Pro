@@ -436,7 +436,19 @@ Open your browser at **`http://localhost:8000`**.
 streamlit run app.py
 ```
 
-### 5. (Optional) Frontend Development Mode
+### 5. Docker & Cloud Deployment (Render)
+Build and run the unified container locally:
+```bash
+# Build multi-stage Docker image
+docker build -t agentic-research-pro .
+
+# Run container with environment configuration
+docker run -p 8000:8000 --env-file .env agentic-research-pro
+```
+
+For **Render**, deploy using the included `render.yaml` Blueprint or connect your repository as a Docker Web Service pointing to `Dockerfile` with health check path `/health`.
+
+### 6. (Optional) Frontend Development Mode
 If you wish to edit the React frontend with live hot-module replacement (HMR):
 ```bash
 cd frontend

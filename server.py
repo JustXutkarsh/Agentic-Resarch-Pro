@@ -368,7 +368,7 @@ async def download_research_pdf(session_id: str):
 
 @app.api_route("/health", methods=["GET", "HEAD"])
 async def health_check():
-    """Lightweight health check endpoint for container orchestrators (Render/Railway) and load balancers."""
+    """Lightweight health check endpoint for container orchestrators (Render) and load balancers."""
     return {
         "status": "ok",
         "service": "agentic-research-pro",

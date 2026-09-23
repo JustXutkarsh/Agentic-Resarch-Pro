@@ -1,6 +1,6 @@
 """
 Deployment Readiness Test Suite for Agentic Research PRO.
-Validates production deployment contracts for Railway:
+Validates production deployment contracts for Render / container deployment:
 - GET /health and GET /api/health lightweight endpoints
 - Static frontend index & SPA routing fallback
 - Configurable CORS headers
@@ -109,10 +109,10 @@ def test_playwright_chromium_launch():
         
         context = browser.new_context()
         page = context.new_page()
-        page.set_content("<html><head><title>Railway Test</title></head><body><h1>Agentic Research PRO</h1></body></html>")
+        page.set_content("<html><head><title>Render Deployment Test</title></head><body><h1>Agentic Research PRO</h1></body></html>")
         
         title = page.title()
-        assert title == "Railway Test"
+        assert title == "Render Deployment Test"
         heading = page.locator("h1").inner_text()
         assert heading == "Agentic Research PRO"
         

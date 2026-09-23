@@ -24,7 +24,7 @@ def get_chroma_client() -> ClientAPI:
     """
     Singleton getter for the Chroma client.
     Defaults to in-memory EphemeralClient for containerized research isolation.
-    If CHROMA_PERSIST_DIR is set (e.g. Railway mounted persistent volume),
+    If CHROMA_PERSIST_DIR is set (e.g. mounted persistent volume),
     uses PersistentClient at that directory.
     """
     global _CHROMA_CLIENT
