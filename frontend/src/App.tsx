@@ -37,8 +37,14 @@ export const App: React.FC = () => {
       });
 
       if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.detail || 'Failed to initialize research session.');
+        let errMessage = 'Failed to initialize research session.';
+        try {
+          const errData = await response.json();
+          errMessage = errData.detail || errMessage;
+        } catch {
+          errMessage = `Server returned status ${response.status} (${response.statusText || 'Error'}).`;
+        }
+        throw new Error(errMessage);
       }
 
       const initData = await response.json();
@@ -91,7 +97,16 @@ export const App: React.FC = () => {
       });
     } catch (err: any) {
       console.error('Failed to start research:', err);
-      setError(err.message || 'An unexpected error occurred during research launch.');
+      let userFriendlyError = err.message || 'An unexpected error occurred during research launch.';
+      if (err.name === 'TypeError' && String(err.message).toLowerCase().includes('fetch')) {
+        const isVercel = typeof window !== 'undefined' && window.location.hostname.includes('vercel.app');
+        if (isVercel) {
+          userFriendlyError = 'Failed to connect to research backend API. On Vercel, please set VITE_API_BASE_URL in your Vercel Project Environment Variables pointing to your deployed Render service (e.g. https://your-service.onrender.com), and ensure Render has CORS_ALLOW_ORIGINS configured.';
+        } else {
+          userFriendlyError = 'Failed to connect to research backend server. Please verify that the FastAPI backend is running (python server.py on port 8000).';
+        }
+      }
+      setError(userFriendlyError);
     }
   };
 
@@ -198,6 +213,18 @@ export const App: React.FC = () => {
                   className="w-full sm:w-auto px-6 py-3 rounded-xl bg-research-blue text-white font-sans text-xs font-bold hover:bg-research-deepBlue transition-colors shadow-md animate-bounce min-h-[44px]"
                 >
                   View Final Research Dossier →
+                </button>
+              </div>
+            )}
+
+            {/* If error occurred, offer return to composer */}
+            {error && (
+              <div className="text-center mt-6">
+                <button
+                  onClick={handleNewInvestigation}
+                  className="w-full sm:w-auto px-6 py-3 rounded-xl bg-research-paper border border-research-border hover:bg-research-surface text-research-primary font-sans text-xs font-bold transition-colors shadow-subtle min-h-[44px]"
+                >
+                  ← Return to Investigation Composer
                 </button>
               </div>
             )}

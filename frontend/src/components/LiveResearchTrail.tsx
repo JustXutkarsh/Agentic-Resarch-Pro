@@ -35,15 +35,24 @@ export const LiveResearchTrail: React.FC<LiveResearchTrailProps> = ({
 
   // Live wall-clock elapsed timer
   useEffect(() => {
-    if (isComplete || error) return;
+    if (isComplete || error || !startedAt) {
+      if (!startedAt) setElapsedSeconds(0);
+      return;
+    }
     const startTime = new Date(startedAt).getTime();
+    if (isNaN(startTime)) {
+      setElapsedSeconds(0);
+      return;
+    }
     
-    const interval = setInterval(() => {
+    const update = () => {
       const now = Date.now();
       const diff = Math.max(0, Math.floor((now - startTime) / 1000));
       setElapsedSeconds(diff);
-    }, 1000);
+    };
 
+    update();
+    const interval = setInterval(update, 1000);
     return () => clearInterval(interval);
   }, [startedAt, isComplete, error]);
 
@@ -55,6 +64,7 @@ export const LiveResearchTrail: React.FC<LiveResearchTrailProps> = ({
   }, [events]);
 
   const formatElapsed = (sec: number) => {
+    if (isNaN(sec) || sec <= 0) return '00:00 elapsed';
     const mins = Math.floor(sec / 60);
     const secs = sec % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')} elapsed`;
