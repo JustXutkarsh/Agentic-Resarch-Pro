@@ -436,8 +436,36 @@ Open your browser at **`http://localhost:8000`**.
 streamlit run app.py
 ```
 
-### 5. Docker & Cloud Deployment (Render)
-Build and run the unified container locally:
+### 5. Production Cloud Deployment: Vercel (Frontend) + Render (Backend)
+
+The application supports a modern split cloud architecture:
+* **Frontend (Vercel)**: React 19 + Vite static SPA deployed from the `frontend/` directory with automatic client-side SPA routing (`vercel.json`).
+* **Backend (Render)**: Dockerized FastAPI server providing SSE live research streams, ReportLab PDF dossier generation, Ephemeral ChromaDB vector manifold, SentenceTransformers, Playwright Chromium headless acquisition, and NVIDIA NIM primary (Nemotron 120B) with automatic OpenAI fallback.
+
+#### Vercel Frontend Setup:
+1. Connect your GitHub repository to Vercel.
+2. Set **Root Directory** to `frontend`.
+3. Set **Framework Preset** to `Vite`.
+4. Configure Environment Variable:
+   ```env
+   VITE_API_BASE_URL=https://YOUR-RENDER-SERVICE.onrender.com
+   ```
+
+#### Render Backend Setup:
+1. Deploy as a **Web Service** using the root `Dockerfile` (or connect using the included `render.yaml` Blueprint).
+2. Configure **Health Check Path** to `/health`.
+3. Configure Environment Variables:
+   ```env
+   CORS_ALLOW_ORIGINS=https://YOUR-VERCEL-APP.vercel.app
+   NVIDIA_API_KEY=nvapi-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+   OPENAI_API_KEY=sk-proj-xxxxxxxxxxxxxxxxxxxxxxxxxxxx
+   TAVILY_API_KEY=tvly-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+   PLAYWRIGHT_ENABLED=true
+   PLAYWRIGHT_HEADLESS=true
+   ```
+
+### 6. Single-Container Docker Deployment (Alternative)
+Build and run the unified container locally or on any container platform:
 ```bash
 # Build multi-stage Docker image
 docker build -t agentic-research-pro .
@@ -446,9 +474,7 @@ docker build -t agentic-research-pro .
 docker run -p 8000:8000 --env-file .env agentic-research-pro
 ```
 
-For **Render**, deploy using the included `render.yaml` Blueprint or connect your repository as a Docker Web Service pointing to `Dockerfile` with health check path `/health`.
-
-### 6. (Optional) Frontend Development Mode
+### 7. (Optional) Frontend Development Mode
 If you wish to edit the React frontend with live hot-module replacement (HMR):
 ```bash
 cd frontend

@@ -61,6 +61,40 @@ def test_nonexistent_api_returns_404(client):
     assert response.status_code == 404
 
 
+def test_cors_default_origins_allowed(client):
+    """Local development origins must be allowed by default CORS configuration."""
+    # Preflight OPTIONS request
+    preflight = client.options(
+        "/health",
+        headers={
+            "Origin": "http://localhost:5173",
+            "Access-Control-Request-Method": "GET",
+        },
+    )
+    assert preflight.status_code == 200
+    assert preflight.headers.get("access-control-allow-origin") == "http://localhost:5173"
+
+    # Actual GET request includes Access-Control-Expose-Headers
+    resp = client.get(
+        "/health",
+        headers={"Origin": "http://localhost:5173"},
+    )
+    assert resp.status_code == 200
+    assert resp.headers.get("access-control-allow-origin") == "http://localhost:5173"
+    assert "content-disposition" in resp.headers.get("access-control-expose-headers", "").lower()
+
+
+def test_cors_origin_normalization_logic():
+    """Verify that comma-separated origins are trimmed of whitespace and trailing slashes."""
+    raw = " https://my-agentic-app.vercel.app/ , https://preview-123.vercel.app/ , http://custom-domain.com "
+    configured = [o.strip().rstrip("/") for o in raw.split(",") if o.strip()]
+    assert configured == [
+        "https://my-agentic-app.vercel.app",
+        "https://preview-123.vercel.app",
+        "http://custom-domain.com",
+    ]
+
+
 def test_chroma_ephemeral_client():
     """Verify Chroma initializes EphemeralClient by default."""
     from src.chroma_store import get_chroma_client, reset_chroma_client

@@ -10,6 +10,7 @@ import {
   ArrowLeft,
 } from 'lucide-react';
 import type { ResearchResultData } from '../types/research';
+import { getApiUrl } from '../config/api';
 
 interface ContinuousDossierViewProps {
   result: ResearchResultData;
@@ -67,7 +68,7 @@ export const ContinuousDossierView: React.FC<ContinuousDossierViewProps> = ({
           </button>
 
           <a
-            href={`/api/research/${result.session_id}/pdf`}
+            href={getApiUrl(`/api/research/${result.session_id}/pdf`)}
             download={`research_dossier_${result.session_id.slice(0, 8)}.pdf`}
             className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-research-blue hover:bg-blue-600 text-white font-mono text-xs font-semibold shadow-sm transition-all hover:shadow-md"
           >

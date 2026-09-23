@@ -24,3 +24,5 @@ services:
         value: "true"
       - key: PLAYWRIGHT_HEADLESS
         value: "true"
+      - key: CORS_ALLOW_ORIGINS
+        sync: false

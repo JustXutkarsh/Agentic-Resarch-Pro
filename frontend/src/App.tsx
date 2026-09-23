@@ -5,6 +5,7 @@ import { WhyDifferentModal } from './components/WhyDifferentModal';
 import { LiveResearchTrail } from './components/LiveResearchTrail';
 import { ContinuousDossierView } from './components/ContinuousDossierView';
 import type { ResearchDepth, ProgressEvent, ResearchResultData } from './types/research';
+import { getApiUrl } from './config/api';
 
 export const App: React.FC = () => {
   const [screen, setScreen] = useState<'home' | 'live' | 'dossier'>('home');
@@ -28,7 +29,7 @@ export const App: React.FC = () => {
     setScreen('live');
 
     try {
-      const response = await fetch('/api/research', {
+      const response = await fetch(getApiUrl('/api/research'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ topic: selectedTopic, depth: selectedDepth }),
@@ -43,7 +44,7 @@ export const App: React.FC = () => {
       setStartedAt(initData.started_at);
 
       // Connect to Server-Sent Events (SSE) Stream
-      const eventSource = new EventSource(initData.stream_url);
+      const eventSource = new EventSource(getApiUrl(initData.stream_url));
 
       eventSource.addEventListener('progress', (e: MessageEvent) => {
         try {

@@ -45,22 +45,31 @@ app = FastAPI(
 )
 
 # Configure CORS with safe defaults for local development and configurable origins
+default_local_origins = [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:3000",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+]
+
 cors_origins_raw = os.environ.get("CORS_ALLOW_ORIGINS", "").strip()
 if cors_origins_raw == "*":
     allow_origins = ["*"]
     allow_credentials = False
 elif cors_origins_raw:
-    allow_origins = [o.strip() for o in cors_origins_raw.split(",") if o.strip()]
+    # Parse comma-separated origins, strip whitespace, and normalize trailing slashes
+    configured = [
+        o.strip().rstrip("/")
+        for o in cors_origins_raw.split(",")
+        if o.strip()
+    ]
+    # Keep local development origins accessible alongside configured production origins (e.g. Vercel)
+    allow_origins = list(dict.fromkeys(configured + default_local_origins))
     allow_credentials = True
 else:
-    allow_origins = [
-        "http://localhost:5173",
-        "http://localhost:3000",
-        "http://127.0.0.1:5173",
-        "http://127.0.0.1:3000",
-        "http://localhost:8000",
-        "http://127.0.0.1:8000",
-    ]
+    allow_origins = default_local_origins
     allow_credentials = True
 
 app.add_middleware(
@@ -69,6 +78,7 @@ app.add_middleware(
     allow_credentials=allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["Content-Disposition"],
 )
 
 
