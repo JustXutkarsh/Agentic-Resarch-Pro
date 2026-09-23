@@ -4,26 +4,41 @@ Uses in-memory EphemeralClient with session-based isolation, cosine distance ind
 rich source metadata, and unified Hugging Face embeddings for indexing and retrieval.
 """
 
+import os
 import uuid
 import logging
 from typing import List, Dict, Any, Optional
 from urllib.parse import urlparse
-from chromadb import EphemeralClient
+import chromadb
+from chromadb.api import ClientAPI
 from chromadb.api.models.Collection import Collection
 from src.embedder import embed_text
 
 logger = logging.getLogger("ChromaStore")
 
 # Global client instance to manage collections per session
-_CHROMA_CLIENT: Optional[EphemeralClient] = None
+_CHROMA_CLIENT: Optional[ClientAPI] = None
 
 
-def get_chroma_client() -> EphemeralClient:
-    """Singleton getter for the Chroma EphemeralClient."""
+def get_chroma_client() -> ClientAPI:
+    """
+    Singleton getter for the Chroma client.
+    Defaults to in-memory EphemeralClient for containerized research isolation.
+    If CHROMA_PERSIST_DIR is set (e.g. Railway mounted persistent volume),
+    uses PersistentClient at that directory.
+    """
     global _CHROMA_CLIENT
     if _CHROMA_CLIENT is None:
-        _CHROMA_CLIENT = EphemeralClient()
+        persist_dir = os.environ.get("CHROMA_PERSIST_DIR", "").strip()
+        if persist_dir:
+            os.makedirs(persist_dir, exist_ok=True)
+            _CHROMA_CLIENT = chromadb.PersistentClient(path=persist_dir)
+            logger.info(f"Initialized Chroma PersistentClient at {persist_dir}")
+        else:
+            _CHROMA_CLIENT = chromadb.EphemeralClient()
+            logger.info("Initialized Chroma EphemeralClient (in-memory)")
     return _CHROMA_CLIENT
+
 
 
 def reset_chroma_client() -> None:

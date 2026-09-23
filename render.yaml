@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: agentic-research-pro
+    runtime: docker
+    dockerfilePath: Dockerfile
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: NVIDIA_API_KEY
+        sync: false
+      - key: NVIDIA_BASE_URL
+        value: https://integrate.api.nvidia.com/v1
+      - key: NVIDIA_MODEL
+        value: nvidia/nemotron-3-super-120b-a12b
+      - key: LLM_PROVIDER
+        value: nvidia
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        value: gpt-4o
+      - key: TAVILY_API_KEY
+        sync: false
+      - key: PLAYWRIGHT_ENABLED
+        value: "true"
+      - key: PLAYWRIGHT_HEADLESS
+        value: "true"

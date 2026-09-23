@@ -28,6 +28,17 @@ def _compute_sha256(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
+MAX_CACHE_ENTRIES = 2048
+
+
+def _set_cache(key: str, vec: List[float]) -> None:
+    """Store vector in cache with bounded size to prevent memory leaks in constrained environments."""
+    if len(_EMBEDDING_CACHE) >= MAX_CACHE_ENTRIES:
+        for k in list(_EMBEDDING_CACHE.keys())[:MAX_CACHE_ENTRIES // 4]:
+            _EMBEDDING_CACHE.pop(k, None)
+    _EMBEDDING_CACHE[key] = vec
+
+
 def embed_text(text: str) -> List[float]:
     """
     Generate a 384-dimensional vector embedding for a single text string.
@@ -42,8 +53,9 @@ def embed_text(text: str) -> List[float]:
 
     model = load_embedding_model()
     vec = model.encode(text, convert_to_numpy=True).tolist()
-    _EMBEDDING_CACHE[cache_key] = vec
+    _set_cache(cache_key, vec)
     return vec
+
 
 
 def embed_documents(documents: List[str], batch_size: int = 32) -> List[List[float]]:
@@ -83,7 +95,7 @@ def embed_documents(documents: List[str], batch_size: int = 32) -> List[List[flo
 
         for idx, doc, vec in zip(uncached_indices, uncached_texts, computed_vectors):
             cache_key = _compute_sha256(doc)
-            _EMBEDDING_CACHE[cache_key] = vec
+            _set_cache(cache_key, vec)
             results[idx] = vec
 
     return [v for v in results if v is not None]

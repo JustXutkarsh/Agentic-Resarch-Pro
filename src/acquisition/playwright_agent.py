@@ -86,7 +86,14 @@ class PlaywrightAgent:
             self._playwright = sync_playwright().start()
             self._browser = self._playwright.chromium.launch(
                 headless=self.headless,
-                args=["--disable-dev-shm-usage", "--no-sandbox"],
+                args=[
+                    "--disable-dev-shm-usage",
+                    "--no-sandbox",
+                    "--disable-gpu",
+                    "--disable-extensions",
+                    "--mute-audio",
+                    "--js-flags=--max-old-space-size=256",
+                ],
             )
         return self._browser
 

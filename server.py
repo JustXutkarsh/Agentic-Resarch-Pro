@@ -8,6 +8,7 @@ import os
 import sys
 import asyncio
 import logging
+import tempfile
 from datetime import datetime
 from typing import Dict, Any, Optional
 from concurrent.futures import ThreadPoolExecutor
@@ -43,16 +44,38 @@ app = FastAPI(
     version="2.0.0",
 )
 
-# Enable CORS for local Vite development
+# Configure CORS with safe defaults for local development and configurable origins
+cors_origins_raw = os.environ.get("CORS_ALLOW_ORIGINS", "").strip()
+if cors_origins_raw == "*":
+    allow_origins = ["*"]
+    allow_credentials = False
+elif cors_origins_raw:
+    allow_origins = [o.strip() for o in cors_origins_raw.split(",") if o.strip()]
+    allow_credentials = True
+else:
+    allow_origins = [
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:3000",
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+    ]
+    allow_credentials = True
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=allow_origins,
+    allow_credentials=allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-executor = ThreadPoolExecutor(max_workers=4)
+
+TEMP_STORAGE_DIR = os.environ.get("TEMP_STORAGE_DIR", tempfile.gettempdir())
+os.makedirs(TEMP_STORAGE_DIR, exist_ok=True)
+MAX_WORKERS = int(os.environ.get("MAX_RESEARCH_WORKERS", "2"))
+executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
 
 # In-memory research session registry
 active_sessions: Dict[str, Dict[str, Any]] = {}
@@ -168,8 +191,8 @@ def run_research_worker(
             session_id=session_id,
         )
         
-        # Generate PDF Dossier
-        pdf_path = f"research_dossier_{result.session_id}.pdf"
+        # Generate PDF Dossier in temporary storage
+        pdf_path = os.path.join(TEMP_STORAGE_DIR, f"research_dossier_{result.session_id}.pdf")
         generate_research_pdf(result, output_path=pdf_path)
         
         now = datetime.now().astimezone()
@@ -343,6 +366,26 @@ async def download_research_pdf(session_id: str):
     )
 
 
+@app.api_route("/health", methods=["GET", "HEAD"])
+async def health_check():
+    """Lightweight health check endpoint for container orchestrators (Render/Railway) and load balancers."""
+    return {
+        "status": "ok",
+        "service": "agentic-research-pro",
+        "version": "2.0.0",
+    }
+
+
+@app.api_route("/api/health", methods=["GET", "HEAD"])
+async def api_health_check():
+    """API-prefixed lightweight health check mirror."""
+    return {
+        "status": "ok",
+        "service": "agentic-research-pro",
+        "version": "2.0.0",
+    }
+
+
 @app.get("/api/health/llm")
 async def get_llm_health():
     """Returns LLM provider health check without revealing sensitive credentials."""
@@ -354,7 +397,35 @@ async def get_llm_health():
 # Mount compiled React frontend static files if available
 FRONTEND_DIST = os.path.join(CURRENT_DIR, "frontend", "dist")
 if os.path.exists(FRONTEND_DIST):
-    app.mount("/", StaticFiles(directory=FRONTEND_DIST, html=True), name="frontend")
+    assets_dir = os.path.join(FRONTEND_DIST, "assets")
+    if os.path.exists(assets_dir):
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+
+    @app.api_route("/", methods=["GET", "HEAD"])
+    async def serve_index():
+        index_file = os.path.join(FRONTEND_DIST, "index.html")
+        if os.path.exists(index_file):
+            return FileResponse(index_file)
+        raise HTTPException(status_code=404, detail="Index not found")
+
+    @app.api_route("/{full_path:path}", methods=["GET", "HEAD"])
+    async def serve_spa(full_path: str):
+        if (
+            full_path.startswith("api")
+            or full_path.startswith("health")
+            or full_path.startswith("docs")
+            or full_path.startswith("openapi.json")
+        ):
+            raise HTTPException(status_code=404, detail="Not Found")
+
+        file_path = os.path.join(FRONTEND_DIST, full_path)
+        if full_path and os.path.isfile(file_path):
+            return FileResponse(file_path)
+
+        index_file = os.path.join(FRONTEND_DIST, "index.html")
+        if os.path.exists(index_file):
+            return FileResponse(index_file)
+        raise HTTPException(status_code=404, detail="Index not found")
 else:
     @app.get("/")
     async def index_placeholder():
@@ -368,5 +439,6 @@ else:
 if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("PORT", 8000))
-    logger.info(f"Launching Agentic Research API on http://localhost:{port}")
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    logger.info(f"Launching Agentic Research API on http://0.0.0.0:{port}")
+    uvicorn.run("server:app", host="0.0.0.0", port=port)
+

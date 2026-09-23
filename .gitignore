@@ -15,3 +15,7 @@ research_dossier_*.pdf
 chroma_data/
 scratch/*.png
 scratch/*.pdf
+node_modules/
+frontend/node_modules/
+.pytest_cache/
+
