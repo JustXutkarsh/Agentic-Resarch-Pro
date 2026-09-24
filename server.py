@@ -72,9 +72,13 @@ else:
     allow_origins = default_local_origins
     allow_credentials = True
 
+cors_origin_regex_raw = os.environ.get("CORS_ALLOW_ORIGIN_REGEX", r"^https:\/\/.*\.vercel\.app$").strip()
+cors_origin_regex = cors_origin_regex_raw if cors_origin_regex_raw else None
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allow_origins,
+    allow_origin_regex=cors_origin_regex,
     allow_credentials=allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -95,6 +95,34 @@ def test_cors_origin_normalization_logic():
     ]
 
 
+def test_cors_vercel_origins_allowed(client):
+    """Verify production and preview Vercel domains are allowed with preflight 200."""
+    vercel_origins = [
+        "https://agentic-research-pro.vercel.app",
+        "https://agentic-research-pro-git-main-justxutkarsh.vercel.app",
+        "https://my-custom-subdomain.vercel.app",
+    ]
+
+    for origin in vercel_origins:
+        # Preflight OPTIONS request for /api/research
+        preflight = client.options(
+            "/api/research",
+            headers={
+                "Origin": origin,
+                "Access-Control-Request-Method": "POST",
+                "Access-Control-Request-Headers": "Content-Type",
+            },
+        )
+        assert preflight.status_code == 200, f"Preflight failed for {origin}"
+        assert preflight.headers.get("access-control-allow-origin") == origin
+        assert preflight.headers.get("access-control-allow-credentials") == "true"
+
+        # GET request to /health with Vercel origin
+        resp = client.get("/health", headers={"Origin": origin})
+        assert resp.status_code == 200
+        assert resp.headers.get("access-control-allow-origin") == origin
+
+
 def test_chroma_ephemeral_client():
     """Verify Chroma initializes EphemeralClient by default."""
     from src.chroma_store import get_chroma_client, reset_chroma_client

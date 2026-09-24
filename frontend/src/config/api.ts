@@ -10,6 +10,10 @@ export const API_BASE_URL: string = (
   import.meta.env.VITE_API_BASE_URL || ''
 ).trim().replace(/\/+$/, '');
 
+export const isLocalEnvironment: boolean =
+  typeof window !== 'undefined' &&
+  ['localhost', '127.0.0.1', '0.0.0.0'].includes(window.location.hostname);
+
 /**
  * Constructs a fully qualified or relative API URL from a given endpoint path or stream URL.
  *

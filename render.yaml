@@ -26,3 +26,5 @@ services:
         value: "true"
       - key: CORS_ALLOW_ORIGINS
         sync: false
+      - key: CORS_ALLOW_ORIGIN_REGEX
+        value: "^https://.*\\.vercel\\.app$"

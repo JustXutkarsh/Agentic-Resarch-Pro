@@ -6,7 +6,7 @@ import { LiveResearchTrail } from './components/LiveResearchTrail';
 import { ContinuousDossierView } from './components/ContinuousDossierView';
 import { ThemeToggle } from './components/ThemeToggle';
 import type { ResearchDepth, ProgressEvent, ResearchResultData } from './types/research';
-import { getApiUrl } from './config/api';
+import { getApiUrl, API_BASE_URL, isLocalEnvironment } from './config/api';
 
 export const App: React.FC = () => {
   const [screen, setScreen] = useState<'home' | 'live' | 'dossier'>('home');
@@ -29,20 +29,93 @@ export const App: React.FC = () => {
     setResult(null);
     setScreen('live');
 
-    try {
-      const response = await fetch(getApiUrl('/api/research'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic: selectedTopic, depth: selectedDepth }),
+    // Category A: Check if API_BASE_URL is missing in a remote deployment (e.g. Vercel)
+    if (!API_BASE_URL && !isLocalEnvironment) {
+      const errMessage =
+        'Backend API URL is not configured (VITE_API_BASE_URL is missing). In your Vercel Project Settings > Environment Variables, add VITE_API_BASE_URL pointing to your Render backend service, then trigger a redeployment.';
+      console.error('[API Config Error]', {
+        apiBaseUrl: API_BASE_URL || '(empty)',
+        hostname: window.location.hostname,
+        cause: 'VITE_API_BASE_URL was not injected during Vite build',
       });
+      setError(errMessage);
+      return;
+    }
 
+    const researchEndpoint = getApiUrl('/api/research');
+    console.info('[Research Pipeline Launch]', {
+      endpoint: researchEndpoint,
+      apiBaseUrl: API_BASE_URL || '(same-origin / dev proxy)',
+      depth: selectedDepth,
+    });
+
+    try {
+      let response: Response;
+      try {
+        response = await fetch(researchEndpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ topic: selectedTopic, depth: selectedDepth }),
+        });
+      } catch (fetchErr: any) {
+        console.error('[Fetch Network Error]', {
+          endpoint: researchEndpoint,
+          apiBaseUrl: API_BASE_URL || '(same-origin)',
+          errorName: fetchErr.name,
+          errorMessage: fetchErr.message,
+        });
+
+        if (isLocalEnvironment) {
+          throw new Error('Failed to connect to local backend server. Please verify that the FastAPI backend is running (python server.py on port 8000).');
+        }
+
+        // Diagnostic probe: Differentiate Category B (Backend unreachable) vs Category C (CORS failure)
+        let isCorsFailure = false;
+        try {
+          const probeUrl = getApiUrl('/health');
+          // 'no-cors' mode succeeds if the server is alive and reachable over HTTP even if CORS headers were blocked
+          await fetch(probeUrl, { method: 'GET', mode: 'no-cors', signal: AbortSignal.timeout(3500) });
+          isCorsFailure = true;
+        } catch {
+          isCorsFailure = false;
+        }
+
+        if (isCorsFailure) {
+          // Category C: CORS failure
+          throw new Error(
+            `CORS connection error: The Render backend at ${API_BASE_URL} is online, but did not permit requests from origin "${window.location.origin}". Ensure CORS_ALLOW_ORIGINS on Render includes "${window.location.origin}".`
+          );
+        } else {
+          // Category B: Backend unreachable
+          throw new Error(
+            `Backend unreachable at ${API_BASE_URL}. The Render service may be sleeping (Render free-tier cold starts take ~45s) or offline. Please wait a moment and try again.`
+          );
+        }
+      }
+
+      // Category D: /api/research returned non-2xx
       if (!response.ok) {
-        let errMessage = 'Failed to initialize research session.';
+        let errMessage = `Server error (${response.status} ${response.statusText || 'Error'})`;
         try {
           const errData = await response.json();
-          errMessage = errData.detail || errMessage;
+          if (errData.detail) errMessage = errData.detail;
         } catch {
-          errMessage = `Server returned status ${response.status} (${response.statusText || 'Error'}).`;
+          // Response body was not JSON
+        }
+
+        console.error('[API Response Error]', {
+          endpoint: researchEndpoint,
+          status: response.status,
+          statusText: response.statusText,
+          message: errMessage,
+        });
+
+        if (response.status === 405) {
+          throw new Error('API endpoint returned 405 Method Not Allowed. The request was routed to a static host rather than the Render FastAPI backend.');
+        } else if (response.status === 502 || response.status === 503) {
+          throw new Error(`Backend service is temporarily unavailable (HTTP ${response.status}). Render may still be booting the container.`);
+        } else if (response.status === 504) {
+          throw new Error('Backend request timed out (HTTP 504). Please try again.');
         }
         throw new Error(errMessage);
       }
@@ -51,13 +124,18 @@ export const App: React.FC = () => {
       setStartedAt(initData.started_at);
 
       // Connect to Server-Sent Events (SSE) Stream
-      const eventSource = new EventSource(getApiUrl(initData.stream_url));
+      const sseUrl = getApiUrl(initData.stream_url);
+      console.info('[Connecting SSE Stream]', { sseUrl });
+
+      let receivedEventCount = 0;
+      const eventSource = new EventSource(sseUrl);
 
       eventSource.addEventListener('progress', (e: MessageEvent) => {
+        receivedEventCount++;
         try {
           const eventData: ProgressEvent = JSON.parse(e.data);
           setEvents((prev) => {
-            // Deduplicate if needed
+            // Deduplicate consecutive identical messages
             if (prev.length > 0 && prev[prev.length - 1].friendly_message === eventData.friendly_message) {
               const copy = [...prev];
               copy[copy.length - 1] = eventData;
@@ -66,11 +144,12 @@ export const App: React.FC = () => {
             return [...prev, eventData];
           });
         } catch (err) {
-          console.error('Error parsing progress event:', err);
+          console.error('[SSE Progress Parse Error]', err);
         }
       });
 
       eventSource.addEventListener('complete', (e: MessageEvent) => {
+        receivedEventCount++;
         try {
           const eventData: ProgressEvent = JSON.parse(e.data);
           setIsComplete(true);
@@ -83,30 +162,46 @@ export const App: React.FC = () => {
             setScreen('dossier');
           }, 1400);
         } catch (err) {
-          console.error('Error parsing complete event:', err);
+          console.error('[SSE Complete Parse Error]', err);
         }
       });
 
+      // Handle stream errors (Category E: transport disconnect vs Category F: backend application error)
       eventSource.addEventListener('error', (e: any) => {
-        console.error('EventSource error:', e);
-        // If already completed, ignore disconnects
+        // Category F: Check if backend delivered an explicit application error payload
+        if (e.data) {
+          try {
+            const errPayload = JSON.parse(e.data);
+            const appError = errPayload.friendly_message || errPayload.error || 'Research interrupted by backend.';
+            console.error('[Backend Application Error]', { sseUrl, error: appError });
+            setError(appError);
+            eventSource.close();
+            return;
+          } catch {
+            // Not a JSON payload
+          }
+        }
+
+        // Category E: SSE connection or transport failure
+        console.error('[SSE Connection Error]', {
+          sseUrl,
+          readyState: eventSource.readyState,
+          receivedEvents: receivedEventCount,
+          eventType: e.type,
+        });
+
         if (!isComplete) {
-          setError('Live event stream disconnected or encountered a network interruption.');
+          if (receivedEventCount === 0) {
+            setError('Real-time SSE research stream failed to connect. Check backend stream availability and CORS.');
+          } else {
+            setError('Live research stream disconnected during execution.');
+          }
         }
         eventSource.close();
       });
     } catch (err: any) {
-      console.error('Failed to start research:', err);
-      let userFriendlyError = err.message || 'An unexpected error occurred during research launch.';
-      if (err.name === 'TypeError' && String(err.message).toLowerCase().includes('fetch')) {
-        const isVercel = typeof window !== 'undefined' && window.location.hostname.includes('vercel.app');
-        if (isVercel) {
-          userFriendlyError = 'Failed to connect to research backend API. On Vercel, please set VITE_API_BASE_URL in your Vercel Project Environment Variables pointing to your deployed Render service (e.g. https://your-service.onrender.com), and ensure Render has CORS_ALLOW_ORIGINS configured.';
-        } else {
-          userFriendlyError = 'Failed to connect to research backend server. Please verify that the FastAPI backend is running (python server.py on port 8000).';
-        }
-      }
-      setError(userFriendlyError);
+      console.error('[Pipeline Launch Exception]', err);
+      setError(err.message || 'An unexpected error occurred during research launch.');
     }
   };
 
