@@ -103,17 +103,19 @@ class SourceRouter:
                     f"Dynamic content detected ({reason[:35]}); deploying Playwright agent..."
                 )
             logger.info(f"Escalating {url} to Playwright agent: {reason}")
-            pw_doc = self.playwright_agent.acquire(
-                source,
-                research_objective=research_objective,
-                max_chars=max_chars,
-                progress_callback=progress_callback,
-            )
-
-            if pw_doc:
-                return pw_doc, "playwright"
-            else:
-                logger.info(f"Playwright acquisition returned None for {url}; attempting HTTP fallback")
+            try:
+                pw_doc = self.playwright_agent.acquire(
+                    source,
+                    research_objective=research_objective,
+                    max_chars=max_chars,
+                    progress_callback=progress_callback,
+                )
+                if pw_doc:
+                    return pw_doc, "playwright"
+                else:
+                    logger.info(f"Playwright acquisition returned None for {url}; attempting HTTP fallback")
+            except Exception as e:
+                logger.warning(f"Playwright acquisition error for {url}: {e}; falling back to HTTP")
 
         # 4. Fallback: if Playwright failed or was disabled, use HTTP doc if available
         if http_doc is not None:
@@ -170,7 +172,9 @@ class SourceRouter:
                         metrics["failed_playwright"] += 1
 
         finally:
-            # Clean up browser runtime after batch completes
+            # Clean up browser runtime after batch completes and free Chromium process memory
             self.playwright_agent.close()
+            import gc
+            gc.collect()
 
         return documents, failures, metrics

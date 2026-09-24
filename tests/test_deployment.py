@@ -232,3 +232,50 @@ def test_pdf_generation_attribution(tmp_path):
     full_pdf_text = "".join(p.extract_text() or "" for p in reader.pages)
     assert "Built by - Utkarsh Pandey" in full_pdf_text
     assert "Deployment verification analysis" in full_pdf_text
+
+
+def test_cleanup_session_vector_store():
+    """Verify that cleanup_session_vector_store deletes ephemeral collection to release RAM."""
+    from src.chroma_store import get_vector_store, cleanup_session_vector_store, get_chroma_client
+    
+    test_sid = "test_cleanup_session_123"
+    col = get_vector_store(test_sid)
+    assert col is not None
+    client = get_chroma_client()
+    names = [c.name for c in client.list_collections()]
+    assert f"research_{test_sid}" in names
+    
+    cleanup_session_vector_store(test_sid)
+    names_after = [c.name for c in client.list_collections()]
+    assert f"research_{test_sid}" not in names_after
+
+
+def test_session_pruning_bounds_memory(tmp_path):
+    """Verify that prune_old_sessions removes oldest sessions when exceeding MAX_RETAINED_SESSIONS."""
+    from server import active_sessions, prune_old_sessions, MAX_RETAINED_SESSIONS
+    from datetime import datetime, timedelta
+    
+    # Clear sessions for test
+    active_sessions.clear()
+    
+    # Create 5 completed sessions
+    base_time = datetime.now()
+    for i in range(5):
+        sid = f"session_prune_test_{i}"
+        dummy_pdf = str(tmp_path / f"dossier_{i}.pdf")
+        with open(dummy_pdf, "w") as f:
+            f.write("pdf data")
+        active_sessions[sid] = {
+            "session_id": sid,
+            "status": "complete",
+            "started_at": base_time + timedelta(minutes=i),
+            "pdf_path": dummy_pdf,
+        }
+    
+    assert len(active_sessions) == 5
+    prune_old_sessions()
+    assert len(active_sessions) == MAX_RETAINED_SESSIONS
+    # Oldest 2 sessions (0 and 1) should be pruned
+    assert "session_prune_test_0" not in active_sessions
+    assert "session_prune_test_1" not in active_sessions
+    assert "session_prune_test_4" in active_sessions

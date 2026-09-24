@@ -16,8 +16,30 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import List, Dict, Any, Tuple, Optional
 from urllib.parse import urlparse
-from src.embedder import embed_text
+from src.embedder import embed_text, is_embedding_model_loaded
 from src.hallucination import cosine_similarity
+
+
+def compute_lexical_relevance(query: str, text: str) -> float:
+    """
+    Fast, zero-memory relevance scoring based on query term coverage and token overlap.
+    Used during initial source filtering to avoid premature loading of heavy PyTorch models.
+    """
+    if not query or not text:
+        return 0.5
+    query_words = re.findall(r"\w+", query.lower())
+    stop_words = {"the", "a", "an", "and", "or", "in", "on", "at", "to", "for", "of", "with", "is", "are", "was", "were", "by"}
+    meaningful_query = [w for w in query_words if w not in stop_words] or query_words
+
+    text_words = set(re.findall(r"\w+", text.lower()))
+    if not meaningful_query:
+        return 0.5
+
+    matches = sum(1 for w in meaningful_query if w in text_words)
+    overlap_ratio = matches / len(meaningful_query)
+
+    phrase_bonus = 0.15 if query.lower().strip() in text.lower() else 0.0
+    return max(0.0, min(1.0, 0.40 + (overlap_ratio * 0.45) + phrase_bonus))
 
 
 @dataclass
@@ -249,14 +271,19 @@ def evaluate_source(
     # 1. Authority and Reputation with 4-tier calibration
     auth_score, rep_score, label, tier, source_type, is_roadmap = evaluate_authority_and_reputation(url, detailed=True)
 
-    # 2. Semantic Relevance (using Hugging Face embeddings)
-    if topic_embedding is None:
-        topic_embedding = embed_text(topic)
-
+    # 2. Semantic Relevance (uses embeddings if already in memory; zero-memory lexical scoring during pre-acquisition)
     text_to_compare = f"{title}. {snippet}"
-    content_embedding = embed_text(text_to_compare)
-    relevance_raw = cosine_similarity(topic_embedding, content_embedding)
-    relevance_score = max(0.0, min(1.0, (relevance_raw + 1.0) / 2.0))
+    if topic_embedding is not None:
+        content_embedding = embed_text(text_to_compare)
+        relevance_raw = cosine_similarity(topic_embedding, content_embedding)
+        relevance_score = max(0.0, min(1.0, (relevance_raw + 1.0) / 2.0))
+    elif is_embedding_model_loaded():
+        topic_embedding = embed_text(topic)
+        content_embedding = embed_text(text_to_compare)
+        relevance_raw = cosine_similarity(topic_embedding, content_embedding)
+        relevance_score = max(0.0, min(1.0, (relevance_raw + 1.0) / 2.0))
+    else:
+        relevance_score = compute_lexical_relevance(topic, text_to_compare)
 
     # 3. Recency
     recency_score, recency_unknown = evaluate_recency(published_date)
@@ -312,7 +339,7 @@ def evaluate_and_filter_sources(
     if not sources:
         return [], []
 
-    topic_embedding = embed_text(topic)
+    topic_embedding = embed_text(topic) if is_embedding_model_loaded() else None
     evaluated_sources = []
 
     for src in sources:

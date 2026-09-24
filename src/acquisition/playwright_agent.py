@@ -80,9 +80,11 @@ class PlaywrightAgent:
         self._browser = None
 
     def _ensure_browser(self):
-        """Lazy-initialize a shared Playwright Chromium browser instance."""
+        """Lazy-initialize a shared Playwright Chromium browser instance with ultra-low memory profile."""
         if self._browser is None:
             from playwright.sync_api import sync_playwright
+            from src.memory_guard import log_memory_stage
+            log_memory_stage("pre_playwright_launch")
             self._playwright = sync_playwright().start()
             self._browser = self._playwright.chromium.launch(
                 headless=self.headless,
@@ -92,25 +94,40 @@ class PlaywrightAgent:
                     "--disable-gpu",
                     "--disable-extensions",
                     "--mute-audio",
-                    "--js-flags=--max-old-space-size=256",
+                    "--renderer-process-limit=1",
+                    "--no-zygote",
+                    "--disable-background-networking",
+                    "--disable-background-timer-throttling",
+                    "--disable-backgrounding-occluded-windows",
+                    "--disable-breakpad",
+                    "--disable-component-update",
+                    "--disable-domain-reliability",
+                    "--disable-sync",
+                    "--js-flags=--max-old-space-size=64",
                 ],
             )
+            log_memory_stage("post_playwright_launch")
         return self._browser
 
     def close(self):
         """Clean up browser and Playwright runtime without leaving orphan processes."""
+        from src.memory_guard import log_memory_stage, trigger_garbage_collection
         try:
             if self._browser:
                 self._browser.close()
                 self._browser = None
         except Exception as e:
             logger.debug(f"Error closing browser: {e}")
+            self._browser = None
         try:
             if self._playwright:
                 self._playwright.stop()
                 self._playwright = None
         except Exception as e:
             logger.debug(f"Error stopping playwright: {e}")
+            self._playwright = None
+        trigger_garbage_collection("playwright_close")
+        log_memory_stage("post_playwright_close")
 
     def __enter__(self):
         self._ensure_browser()
@@ -257,9 +274,14 @@ class PlaywrightAgent:
             browser = self._ensure_browser()
             context = browser.new_context(
                 user_agent=RESEARCH_USER_AGENT,
-                viewport={"width": 1280, "height": 800},
+                viewport={"width": 1024, "height": 768},
                 java_script_enabled=True,
                 ignore_https_errors=True,
+            )
+            # Route abort heavy images, fonts, and media streams to prevent memory bloat in Chromium
+            context.route(
+                "**/*",
+                lambda route: route.abort() if route.request.resource_type in ["image", "media", "font"] else route.continue_()
             )
             page = context.new_page()
             page.set_default_timeout(self.timeout_ms)

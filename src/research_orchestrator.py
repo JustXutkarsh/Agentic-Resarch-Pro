@@ -34,6 +34,7 @@ from src.contradiction_detector import ContradictionDetector, Contradiction
 from src.confidence import calculate_research_confidence, ResearchConfidence
 from src.research_metrics import ResearchMetrics
 from src.llm import get_llm_provider, LLMProvider, OpenAICompatibleClientAdapter
+from src.memory_guard import log_memory_stage, trigger_garbage_collection
 
 logging.basicConfig(
     level=logging.INFO,
@@ -204,6 +205,7 @@ class ResearchOrchestrator:
                     logger.warning(f"Progress callback error: {e}")
 
         report_step("INITIALIZATION", 0.05, f"Starting {config.name} research session for topic: '{topic}'")
+        log_memory_stage("start")
 
         # -------------------------------------------------------------
         # Phase A: Research Planning
@@ -216,6 +218,7 @@ class ResearchOrchestrator:
         if config.enable_planning:
             metrics.llm_calls_made += 1
         report_step("PLANNER", 0.15, f"Generated {len(plan.search_queries)} targeted search queries.")
+        log_memory_stage("planning")
 
         # Get isolated session vector store and bind session_id across agents
         vector_store = get_vector_store(session_id)
@@ -299,6 +302,7 @@ class ResearchOrchestrator:
                 f"Browser: {acq_metrics.get('playwright_acquisitions', 0)}; "
                 f"{len(failed_sources)} failed)."
             )
+            log_memory_stage(f"source_acquisition_iter_{iteration}")
 
             # 4. Chunking (Semantic Table- and Heading-Aware)
             iteration_chunks = []
@@ -346,12 +350,14 @@ class ResearchOrchestrator:
                 report_step("EMBEDDER", 0.37 + (iteration - 1) * 0.20, f"Generating Hugging Face embeddings for {len(iteration_chunks)} chunks...")
                 embeddings = embed_documents(iteration_chunks)
                 save_vectors(vector_store, embeddings, iteration_chunks, metadatas=iteration_metadatas, ids=iteration_ids)
+                log_memory_stage(f"Chroma_indexing_iter_{iteration}")
 
             # 6. Evidence Retrieval (Strict Session Isolation)
             report_step("RETRIEVAL", 0.39 + (iteration - 1) * 0.20, "Retrieving evidence passages from vector store...")
             retrieved = retrieve_relevant_chunks(vector_store, topic, top_k=config.top_k, session_id=session_id)
             state.retrieved_chunks = retrieved
             metrics.retrieved_evidence_chunks = len(retrieved)
+            log_memory_stage(f"retrieval_iter_{iteration}")
 
             # 7. Gap Detection Check (if iterations remain)
             if iteration < config.max_iterations and config.enable_gap_detection:
@@ -400,6 +406,7 @@ class ResearchOrchestrator:
         state.report = report
         metrics.llm_calls_made += 1
         report_step("SYNTHESIZER", 0.75, "Research report synthesis completed.")
+        log_memory_stage("synthesizer")
 
         # -------------------------------------------------------------
         # Phase D: Claim Extraction & Evidence Grounding Verification
@@ -420,6 +427,7 @@ class ResearchOrchestrator:
         metrics.supported_claims = sum(1 for c in verified_claims if c.support_label in ["Strongly Supported", "Supported"])
         metrics.weakly_supported_claims = sum(1 for c in verified_claims if c.support_label in ["Weakly Supported", "Unsupported"])
         report_step("CLAIM_VERIFIER", 0.86, f"Verified {len(verified_claims)} claims ({metrics.supported_claims} supported).")
+        log_memory_stage("claim_verifier")
 
         # -------------------------------------------------------------
         # Phase E: Contradiction Detection (DEEP Mode)
@@ -436,6 +444,7 @@ class ResearchOrchestrator:
             metrics.contradictions_detected = len(contradictions)
             metrics.llm_calls_made += 1
             report_step("CONTRADICTIONS", 0.91, f"Identified {len(contradictions)} conflicting viewpoints / trade-offs.")
+            log_memory_stage("contradictions")
         else:
             state.contradictions = []
 
@@ -458,6 +467,7 @@ class ResearchOrchestrator:
         )
         state.confidence = confidence
         report_step("CONFIDENCE", 0.96, f"Confidence calculated: {int(confidence.overall_score)}/100.")
+        log_memory_stage("confidence")
 
         # Finalize metrics and provider reporting
         metrics.finalize()
@@ -466,6 +476,8 @@ class ResearchOrchestrator:
         metrics.llm_model = getattr(session_provider, "model_name", LLM_MODEL)
         logger.info(f"[{session_id}] [LLM] Research session complete. LLM Provider used: {provider_used} (Model: {metrics.llm_model})")
         report_step("COMPLETE", 1.0, f"Research session completed successfully in {metrics.execution_time_seconds}s.")
+        trigger_garbage_collection("pipeline_complete")
+        log_memory_stage("pipeline_complete")
 
         return ResearchResult(state=state)
 

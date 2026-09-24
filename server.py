@@ -88,11 +88,40 @@ app.add_middleware(
 
 TEMP_STORAGE_DIR = os.environ.get("TEMP_STORAGE_DIR", tempfile.gettempdir())
 os.makedirs(TEMP_STORAGE_DIR, exist_ok=True)
-MAX_WORKERS = int(os.environ.get("MAX_RESEARCH_WORKERS", "2"))
+MAX_WORKERS = int(os.environ.get("MAX_RESEARCH_WORKERS", "1"))
 executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
 
 # In-memory research session registry
 active_sessions: Dict[str, Dict[str, Any]] = {}
+MAX_RETAINED_SESSIONS = 3
+
+
+def prune_old_sessions() -> None:
+    """Retain only the most recent completed sessions to prevent memory leaks in memory-constrained environments."""
+    import gc
+    completed = [
+        sid for sid, d in active_sessions.items()
+        if d.get("status") in ("complete", "error")
+    ]
+    if len(completed) > MAX_RETAINED_SESSIONS:
+        completed.sort(key=lambda s: active_sessions[s].get("started_at", datetime.min))
+        to_prune = completed[:-MAX_RETAINED_SESSIONS]
+        for sid in to_prune:
+            logger.info(f"Pruning expired research session: {sid}")
+            sess = active_sessions.pop(sid, None)
+            if sess:
+                pdf_path = sess.get("pdf_path")
+                if pdf_path and os.path.exists(pdf_path):
+                    try:
+                        os.remove(pdf_path)
+                    except Exception:
+                        pass
+            try:
+                from src.chroma_store import cleanup_session_vector_store
+                cleanup_session_vector_store(sid)
+            except Exception:
+                pass
+        gc.collect()
 
 
 class ResearchRequest(BaseModel):
@@ -241,6 +270,17 @@ def run_research_worker(
         session_data["events"].append(complete_payload)
         asyncio.run_coroutine_threadsafe(event_queue.put(complete_payload), loop)
 
+        # Release vector store collection and prune expired session state
+        try:
+            from src.chroma_store import cleanup_session_vector_store
+            cleanup_session_vector_store(session_id)
+        except Exception:
+            pass
+        prune_old_sessions()
+        from src.memory_guard import trigger_garbage_collection, log_memory_stage
+        trigger_garbage_collection(f"session_complete_{session_id}")
+        log_memory_stage("post_session_completion")
+
     except Exception as e:
         logger.exception(f"Error during research execution for session {session_id}: {e}")
         session_data["status"] = "error"
@@ -256,11 +296,15 @@ def run_research_worker(
         }
         session_data["events"].append(error_payload)
         asyncio.run_coroutine_threadsafe(event_queue.put(error_payload), loop)
+        prune_old_sessions()
 
 
 @app.post("/api/research")
 async def start_research(request: ResearchRequest):
     """Initialize and trigger an autonomous research investigation."""
+    # Prune old completed sessions before spawning new investigation
+    prune_old_sessions()
+
     topic = request.topic.strip()
     if not topic:
         raise HTTPException(status_code=400, detail="Topic must not be empty.")
@@ -325,7 +369,8 @@ async def stream_research(session_id: str):
         # Stream real-time events as they are pushed from the research worker
         while True:
             try:
-                event = await asyncio.wait_for(queue.get(), timeout=120.0)
+                # 15s heartbeat to prevent reverse proxies (e.g. Render / Cloudflare) from terminating idle connections
+                event = await asyncio.wait_for(queue.get(), timeout=15.0)
                 yield {
                     "event": event["type"],
                     "data": JSONResponse(content=event).body.decode("utf-8"),
@@ -334,7 +379,7 @@ async def stream_research(session_id: str):
                 if event["type"] in ["complete", "error"]:
                     break
             except asyncio.TimeoutError:
-                # Send keepalive ping
+                # Send keepalive ping to maintain stream persistence across long stages
                 yield {
                     "event": "ping",
                     "data": '{"ping": true}',

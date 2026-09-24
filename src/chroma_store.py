@@ -47,6 +47,27 @@ def reset_chroma_client() -> None:
     _CHROMA_CLIENT = None
 
 
+def cleanup_session_vector_store(session_id: str) -> None:
+    """
+    Delete the ChromaDB collection for a finished or pruned research session.
+    Releases in-memory vector indices and chunk strings to prevent memory leaks across sessions.
+    """
+    if not session_id:
+        return
+    try:
+        client = get_chroma_client()
+        collection_name = f"research_{session_id}" if session_id else "research_default"
+        safe_name = "".join(c if (c.isalnum() or c in "-_") else "_" for c in collection_name)[:63]
+        if len(safe_name) < 3:
+            safe_name = "research_store"
+        existing_names = [c.name for c in client.list_collections()]
+        if safe_name in existing_names:
+            client.delete_collection(safe_name)
+            logger.info(f"Released vector store collection for session: {safe_name}")
+    except Exception as e:
+        logger.debug(f"Failed to delete Chroma collection for session '{session_id}': {e}")
+
+
 def _extract_session_id(collection: Collection, explicit_session_id: Optional[str] = None) -> str:
     """Extract or validate the research session ID associated with a collection."""
     if explicit_session_id and explicit_session_id.strip():
@@ -73,11 +94,12 @@ def get_vector_store(session_id: Optional[str] = None) -> Collection:
 
     existing_names = [c.name for c in client.list_collections()]
     if safe_name in existing_names:
-        return client.get_collection(safe_name)
+        return client.get_collection(safe_name, embedding_function=None)
     
     return client.create_collection(
         name=safe_name,
-        metadata={"hnsw:space": "cosine"}
+        metadata={"hnsw:space": "cosine"},
+        embedding_function=None,
     )
 
 
