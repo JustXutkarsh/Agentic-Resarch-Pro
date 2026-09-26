@@ -12,7 +12,7 @@ from typing import List, Dict, Any, Optional
 from openai import OpenAI
 from src.config import ResearchConfig, LLM_MODEL
 from src.research_planner import ResearchPlan
-from src.embedder import embed_text
+from src.embedder import embed_text, embed_query
 from src.hallucination import cosine_similarity
 
 from src.llm import LLMProvider, get_llm_provider, OpenAICompatibleClientAdapter
@@ -57,14 +57,14 @@ def _group_chunks_by_dimension(
     """Group evidence chunks into dimension clusters using embeddings."""
     grouped: Dict[str, List[Dict[str, Any]]] = {dim: [] for dim in dimensions}
 
-    dim_embeddings = {dim: embed_text(dim) for dim in dimensions}
+    dim_embeddings = {dim: embed_query(dim) for dim in dimensions}
 
     for chunk_dict in chunks:
         text = chunk_dict.get("text", "")
         if not text:
             continue
 
-        chunk_emb = embed_text(text)
+        chunk_emb = embed_text(text, is_query=False)
 
         # Assign to best matching dimension above threshold
         best_dim = None

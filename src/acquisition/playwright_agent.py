@@ -92,6 +92,7 @@ class PlaywrightAgent:
                     "--disable-dev-shm-usage",
                     "--no-sandbox",
                     "--disable-gpu",
+                    "--single-process",
                     "--disable-extensions",
                     "--mute-audio",
                     "--renderer-process-limit=1",
@@ -271,7 +272,11 @@ class PlaywrightAgent:
             if progress_callback:
                 progress_callback("PLAYWRIGHT_INIT", 0.33, f"Opening interactive browser for: {url[:50]}...")
 
+            from src.memory_guard import log_memory_stage
+            log_memory_stage("playwright_before_launch")
             browser = self._ensure_browser()
+            log_memory_stage("playwright_after_launch")
+
             context = browser.new_context(
                 user_agent=RESEARCH_USER_AGENT,
                 viewport={"width": 1024, "height": 768},
@@ -306,6 +311,7 @@ class PlaywrightAgent:
             # Step 3: Handle interactive expansion
             if progress_callback:
                 progress_callback("PLAYWRIGHT_EXPAND", 0.34, "Inspecting interactive sections & tables...")
+            log_memory_stage("playwright_during_expansion")
             self._expand_interactive_sections(page)
 
             # Step 4: Perform bounded scrolling for dynamic views
@@ -375,6 +381,7 @@ class PlaywrightAgent:
 
             if progress_callback:
                 progress_callback("PLAYWRIGHT_SUCCESS", 0.35, f"Acquired {len(truncated)} chars via browser agent.")
+            log_memory_stage("playwright_after_success")
 
             return EvidenceDocument(
                 url=url,
@@ -409,3 +416,10 @@ class PlaywrightAgent:
                     context.close()
                 except Exception:
                     pass
+            # Guarantee full termination of Chromium & Node driver processes between sources
+            self.close()
+            try:
+                from src.memory_guard import log_memory_stage
+                log_memory_stage("playwright_after_cleanup")
+            except Exception:
+                pass

@@ -14,6 +14,10 @@ services:
         value: nvidia/nemotron-3-super-120b-a12b
       - key: LLM_PROVIDER
         value: nvidia
+      - key: EMBEDDING_PROVIDER
+        value: nvidia
+      - key: NVIDIA_EMBEDDING_MODEL
+        value: nvidia/nemotron-3-embed-1b
       - key: OPENAI_API_KEY
         sync: false
       - key: OPENAI_MODEL

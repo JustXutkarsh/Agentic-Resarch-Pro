@@ -12,7 +12,7 @@ from urllib.parse import urlparse
 import chromadb
 from chromadb.api import ClientAPI
 from chromadb.api.models.Collection import Collection
-from src.embedder import embed_text
+from src.embedder import embed_text, embed_query, get_embedding_provider
 
 logger = logging.getLogger("ChromaStore")
 
@@ -40,7 +40,6 @@ def get_chroma_client() -> ClientAPI:
     return _CHROMA_CLIENT
 
 
-
 def reset_chroma_client() -> None:
     """Reset the global Chroma client (useful for testing and fresh sessions)."""
     global _CHROMA_CLIENT
@@ -49,23 +48,25 @@ def reset_chroma_client() -> None:
 
 def cleanup_session_vector_store(session_id: str) -> None:
     """
-    Delete the ChromaDB collection for a finished or pruned research session.
+    Delete the ChromaDB collections for a finished or pruned research session.
     Releases in-memory vector indices and chunk strings to prevent memory leaks across sessions.
+    Cleans up any provider-specific collections (res_nv_*, res_loc_*, research_*).
     """
     if not session_id:
         return
     try:
         client = get_chroma_client()
-        collection_name = f"research_{session_id}" if session_id else "research_default"
-        safe_name = "".join(c if (c.isalnum() or c in "-_") else "_" for c in collection_name)[:63]
-        if len(safe_name) < 3:
-            safe_name = "research_store"
-        existing_names = [c.name for c in client.list_collections()]
-        if safe_name in existing_names:
-            client.delete_collection(safe_name)
-            logger.info(f"Released vector store collection for session: {safe_name}")
+        clean_sess = session_id.strip()
+        existing = [c.name for c in client.list_collections()]
+        for name in existing:
+            if clean_sess in name:
+                try:
+                    client.delete_collection(name)
+                    logger.info(f"Released vector store collection: {name}")
+                except Exception as del_err:
+                    logger.debug(f"Failed deleting collection '{name}': {del_err}")
     except Exception as e:
-        logger.debug(f"Failed to delete Chroma collection for session '{session_id}': {e}")
+        logger.debug(f"Failed to delete Chroma collections for session '{session_id}': {e}")
 
 
 def _extract_session_id(collection: Collection, explicit_session_id: Optional[str] = None) -> str:
@@ -74,31 +75,55 @@ def _extract_session_id(collection: Collection, explicit_session_id: Optional[st
         return explicit_session_id.strip()
     
     col_name = collection.name
-    if col_name.startswith("research_") and len(col_name) > len("research_"):
-        return col_name[len("research_"):]
+    for prefix in ("research_nv_", "res_nv_", "res_loc_", "research_"):
+        if col_name.startswith(prefix) and len(col_name) > len(prefix):
+            return col_name[len(prefix):]
     return col_name
 
 
 def get_vector_store(session_id: Optional[str] = None) -> Collection:
     """
-    Create or get a ChromaDB collection isolated by session_id.
+    Create or get a ChromaDB collection isolated by session_id and embedding provider.
     Uses cosine space for distance calculation.
     """
     client = get_chroma_client()
-    collection_name = f"research_{session_id}" if session_id else "research_default"
+    provider = get_embedding_provider()
+    sess = session_id.strip() if (session_id and session_id.strip()) else "default"
     
+    # Provider-isolated collection naming:
+    # - NVIDIA remote embeddings: 'research_nv_<session_id>'
+    # - Local SentenceTransformers: 'research_<session_id>'
+    if provider.provider_name == "nvidia":
+        collection_name = f"research_nv_{sess}"
+    else:
+        collection_name = f"research_{sess}"
+
     # Sanitize collection name (Chroma requires 3-63 chars, alphanumeric, dashes, underscores)
     safe_name = "".join(c if (c.isalnum() or c in "-_") else "_" for c in collection_name)[:63]
     if len(safe_name) < 3:
-        safe_name = "research_store"
+        safe_name = "research_nv_store" if provider.provider_name == "nvidia" else "research_store"
 
     existing_names = [c.name for c in client.list_collections()]
     if safe_name in existing_names:
-        return client.get_collection(safe_name, embedding_function=None)
+        col = client.get_collection(safe_name, embedding_function=None)
+        meta = col.metadata or {}
+        col_dim = meta.get("embedding_dimension")
+        if col_dim is not None and int(col_dim) != provider.dimension:
+            raise ValueError(
+                f"Chroma collection '{safe_name}' dimension mismatch: created with dimension {col_dim} "
+                f"({meta.get('embedding_provider')}), but active provider '{provider.provider_name}' "
+                f"produces dimension {provider.dimension}."
+            )
+        return col
     
     return client.create_collection(
         name=safe_name,
-        metadata={"hnsw:space": "cosine"},
+        metadata={
+            "hnsw:space": "cosine",
+            "embedding_provider": provider.provider_name,
+            "embedding_dimension": provider.dimension,
+            "embedding_model": provider.model_name,
+        },
         embedding_function=None,
     )
 
@@ -114,9 +139,19 @@ def save_vectors(
     """
     Store documents, embeddings, and metadata into the Chroma collection.
     Guarantees that every item is stamped with research_session_id, document_id, and chunk_id.
+    Strictly validates embedding dimensions against the active provider.
     """
     if not documents or not embeddings:
         return []
+
+    provider = get_embedding_provider()
+    expected_dim = provider.dimension
+    for idx, emb in enumerate(embeddings):
+        if len(emb) != expected_dim:
+            raise ValueError(
+                f"Document embedding at index {idx} has invalid dimension {len(emb)}, "
+                f"expected {expected_dim} for provider '{provider.provider_name}' ({provider.model_name})."
+            )
 
     count = len(documents)
     current_session = _extract_session_id(collection, session_id)
@@ -203,7 +238,15 @@ def query_vectors(
 
     # Ensure query vector uses the exact same embedding model
     if query_embedding is None:
-        query_embedding = embed_text(query_text)
+        query_embedding = embed_query(query_text)
+
+    provider = get_embedding_provider()
+    expected_dim = provider.dimension
+    if len(query_embedding) != expected_dim:
+        raise ValueError(
+            f"Query embedding has invalid dimension {len(query_embedding)}, "
+            f"expected {expected_dim} for provider '{provider.provider_name}' ({provider.model_name})."
+        )
 
     # top_k cannot exceed collection document count
     actual_k = min(top_k, collection.count())

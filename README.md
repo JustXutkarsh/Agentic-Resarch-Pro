@@ -110,8 +110,11 @@ flowchart TD
             HttpAcq --> Chunker[Sliding-Window Chunker src/chunker.py]
             PdfAcq --> Chunker
             PwAgent --> Chunker
-            Chunker --> LocalEmbedder[Local Hugging Face Embedder\nall-MiniLM-L6-v2 384-D]
-            LocalEmbedder --> ChromaStore[(ChromaDB Ephemeral Store\nSession-Isolated Cosine Index)]
+            Chunker --> EmbedderRouter{Embedding Provider\nsrc/embedder.py}
+            EmbedderRouter -->|Production: Remote NIM| NvidiaEmbedder[NVIDIA NIM Embedder\nnvidia/nemotron-3-embed-1b 2048-D]
+            EmbedderRouter -->|Local Dev: Lazy PyTorch| LocalEmbedder[Local Embedder\nall-MiniLM-L6-v2 384-D]
+            NvidiaEmbedder --> ChromaStore[(ChromaDB Ephemeral Store\nSession-Isolated Cosine Index)]
+            LocalEmbedder --> ChromaStore
         end
 
         subgraph Reflex_And_Debate [Reflex Audit & Dialectic Arbitration]
@@ -409,6 +412,11 @@ NVIDIA_BASE_URL=https://integrate.api.nvidia.com/v1
 NVIDIA_MODEL=nvidia/nemotron-3-super-120b-a12b
 LLM_PROVIDER=nvidia
 
+# Embedding Provider: "nvidia" (remote NIM API, 2048-dim, recommended for 512MB RAM) or "local" (MiniLM, 384-dim)
+EMBEDDING_PROVIDER=nvidia
+NVIDIA_EMBEDDING_MODEL=nvidia/nemotron-3-embed-1b
+EMBEDDING_BATCH_SIZE=16
+
 # Fallback LLM Provider (Safety Net)
 OPENAI_API_KEY=sk-proj-xxxxxxxxxxxxxxxxxxxxxxxxxxxx
 OPENAI_MODEL=gpt-4o
@@ -487,7 +495,7 @@ The Vite dev server will proxy API requests to `http://localhost:8000`.
 
 ## 🧪 Testing & Quality Assurance
 
-The codebase maintains a 100% pass rate across **85 automated tests**:
+The codebase maintains a 100% pass rate across **118 automated tests**:
 
 ```bash
 # Run all tests
@@ -496,11 +504,12 @@ pytest tests/ -v
 
 ### Test Suite Coverage:
 * `tests/test_acquisition.py`: Source routing, Playwright dynamic extraction, Markdown table generation, accordion expansion, bounded scrolling/pagination, HTTP fallback (18 tests).
+* `tests/test_nvidia_embedder.py`: NVIDIA remote embedding provider, bounded batching, order preservation, query/passage mode isolation, rate limit backoff (429), non-retryable auth (401), dimension enforcement, lazy import verification (11 tests).
 * `tests/test_llm_provider.py`: NVIDIA NIM routing, OpenAI fallback, error recovery (9 tests).
 * `tests/test_server.py`: FastAPI health endpoints, session creation, SSE streaming (4 tests).
 * `tests/test_config.py`: Operational parameters, budgets, depth profiles (4 tests).
-* `tests/test_embedder.py`: Singleton model loader, SHA256 caching, batching (6 tests).
-* `tests/test_chroma_store.py`: Session isolation, cosine similarity retrieval (4 tests).
+* `tests/test_embedder.py`: Local SentenceTransformer model loader, SHA256 caching, batching (6 tests).
+* `tests/test_chroma_store.py`: Session and model namespace isolation, cosine similarity retrieval (4 tests).
 * `tests/test_research_planner.py`: Multi-perspective dimensional planning (4 tests).
 * `tests/test_tavily_client.py`: Multi-query deduplication and query caching (6 tests).
 * `tests/test_source_evaluator.py`: 5-factor source quality scoring (5 tests).
@@ -512,6 +521,9 @@ pytest tests/ -v
 * `tests/test_research_metrics.py`: Wall-clock timing and counters (1 test).
 * `tests/test_research_orchestrator.py`: Full orchestration cycle with callbacks (1 test).
 * `tests/test_pdfgen.py`: ReportLab layout, table formatting, and page validation (2 tests).
+* `tests/test_pdf_unicode.py`: Technical symbols, math notations, and Unicode formatting (3 tests).
+* `tests/test_evidence_integrity.py`: Claim preservation, metadata filtering, table chunking (6 tests).
+* `tests/test_deployment.py`: Production health endpoints, CORS regex matching, memory bound assertions (10 tests).
 * `tests/test_end_to_end.py`: Multi-depth operational hierarchies (3 tests).
 
 ---

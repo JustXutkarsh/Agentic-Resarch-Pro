@@ -14,8 +14,36 @@ NVIDIA_MODEL = os.getenv("NVIDIA_MODEL", "nvidia/nemotron-3-super-120b-a12b")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o")
 
 LLM_MODEL = NVIDIA_MODEL if LLM_PROVIDER == "nvidia" else OPENAI_MODEL
-EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
-EMBEDDING_DIMENSION = 384
+
+# Embedding Configuration: "local" (sentence-transformers) or "nvidia" (remote NIM API)
+EMBEDDING_PROVIDER = os.getenv("EMBEDDING_PROVIDER", "local").strip().lower()
+NVIDIA_EMBEDDING_MODEL = os.getenv("NVIDIA_EMBEDDING_MODEL", "nvidia/nemotron-3-embed-1b").strip()
+EMBEDDING_BATCH_SIZE = int(os.getenv("EMBEDDING_BATCH_SIZE", "16"))
+
+
+def get_embedding_provider_name() -> str:
+    """Return the active embedding provider name ('local' or 'nvidia')."""
+    return os.getenv("EMBEDDING_PROVIDER", "local").strip().lower()
+
+
+def get_embedding_model() -> str:
+    """Return the active model identifier based on current provider."""
+    provider = get_embedding_provider_name()
+    if provider == "nvidia":
+        return os.getenv("NVIDIA_EMBEDDING_MODEL", "nvidia/nemotron-3-embed-1b").strip()
+    return "sentence-transformers/all-MiniLM-L6-v2"
+
+
+def get_embedding_dimension() -> int:
+    """Return vector dimension for the active provider (2048 for NVIDIA, 384 for MiniLM)."""
+    provider = get_embedding_provider_name()
+    if provider == "nvidia":
+        return 2048
+    return 384
+
+
+EMBEDDING_MODEL = get_embedding_model()
+EMBEDDING_DIMENSION = get_embedding_dimension()
 
 # Playwright Browser Acquisition Configuration
 PLAYWRIGHT_ENABLED = os.getenv("PLAYWRIGHT_ENABLED", "true").strip().lower() in ("true", "1", "yes")

@@ -12,7 +12,7 @@ from typing import List, Dict, Any, Optional
 from openai import OpenAI
 from src.config import ResearchConfig, LLM_MODEL
 from src.research_planner import ResearchPlan
-from src.embedder import embed_text
+from src.embedder import embed_text, embed_query, embed_documents
 from src.hallucination import cosine_similarity
 from src.llm import LLMProvider, get_llm_provider, OpenAICompatibleClientAdapter
 
@@ -54,13 +54,13 @@ def compute_dimension_coverage(
     if not evidence_chunks:
         return {dim: 0.0 for dim in dimensions}
 
-    # Embed evidence chunks
-    chunk_embeddings = [embed_text(c[:500]) for c in evidence_chunks[:30]]
+    # Embed evidence chunks using bounded document batching
+    chunk_embeddings = embed_documents([c[:500] for c in evidence_chunks[:30]])
 
     coverage_map: Dict[str, float] = {}
 
     for dim in dimensions:
-        dim_vec = embed_text(dim)
+        dim_vec = embed_query(dim)
         similarities = [cosine_similarity(dim_vec, c_vec) for c_vec in chunk_embeddings]
         
         # Take the top 3 highest matches and average them

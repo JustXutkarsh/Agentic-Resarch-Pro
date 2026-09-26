@@ -16,7 +16,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import List, Dict, Any, Tuple, Optional
 from urllib.parse import urlparse
-from src.embedder import embed_text, is_embedding_model_loaded
+from src.embedder import embed_text, embed_query, is_embedding_model_loaded
 from src.hallucination import cosine_similarity
 
 
@@ -274,12 +274,12 @@ def evaluate_source(
     # 2. Semantic Relevance (uses embeddings if already in memory; zero-memory lexical scoring during pre-acquisition)
     text_to_compare = f"{title}. {snippet}"
     if topic_embedding is not None:
-        content_embedding = embed_text(text_to_compare)
+        content_embedding = embed_text(text_to_compare, is_query=False)
         relevance_raw = cosine_similarity(topic_embedding, content_embedding)
         relevance_score = max(0.0, min(1.0, (relevance_raw + 1.0) / 2.0))
     elif is_embedding_model_loaded():
-        topic_embedding = embed_text(topic)
-        content_embedding = embed_text(text_to_compare)
+        topic_embedding = embed_query(topic)
+        content_embedding = embed_text(text_to_compare, is_query=False)
         relevance_raw = cosine_similarity(topic_embedding, content_embedding)
         relevance_score = max(0.0, min(1.0, (relevance_raw + 1.0) / 2.0))
     else:
@@ -339,7 +339,7 @@ def evaluate_and_filter_sources(
     if not sources:
         return [], []
 
-    topic_embedding = embed_text(topic) if is_embedding_model_loaded() else None
+    topic_embedding = embed_query(topic) if is_embedding_model_loaded() else None
     evaluated_sources = []
 
     for src in sources:
